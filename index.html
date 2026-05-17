@@ -46,7 +46,7 @@ body{
 }
 
 .gap{
-  height:10px;
+  height:12px;
 }
 
 #input{
@@ -97,17 +97,23 @@ button{
 const GAS_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQMkIxWVf_pnfnBrZjo0zvwcAmMF9qFDq1j0D5Xrlz8QQ_GlxQzsB9NJm89KvDXi57puiUe8vUM2g6CwdfNCfzmzIaMm-AtMp6ozEjuYv8ZCJ_binvpwNh88mvnoZmV0EAigPwoV0Bdg1UOLWU-l7oxWXuusr7SCjziKFMOqpQkore00fUnJlxhd6YOi6Svn9kxbXBJoYlF1DlP846kdv_JrmDlrMKTi8NGmxVQlkb9TOCNGBmFtgQHYJB3-s3q3Fm8Ipnm4KS1Lrw6C3s0LcVZ8GbGQA&lib=MMmmfd84qT9DxAMG-8CkK5C0SNqudikxB";
 
 function add(text, cls="system"){
+
+  const chat = document.getElementById("chat");
+
   const div = document.createElement("div");
   div.className = "bubble " + cls;
   div.innerText = text;
 
-  document.getElementById("chat").appendChild(div);
+  chat.appendChild(div);
 
-  const gap = document.createElement("div");
-  gap.className = "gap";
-  document.getElementById("chat").appendChild(gap);
+  // ■ ここが重要（余白を確実に分離）
+  requestAnimationFrame(() => {
+    const gap = document.createElement("div");
+    gap.className = "gap";
+    chat.appendChild(gap);
 
-  document.getElementById("chat").scrollTop = 999999;
+    chat.scrollTop = chat.scrollHeight;
+  });
 }
 
 async function send(){
@@ -124,9 +130,7 @@ async function send(){
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      text: text
-    })
+    body: JSON.stringify({ text })
   });
 
   const data = await res.json();
@@ -146,9 +150,11 @@ async function send(){
     div.onclick = () => window.open(data.session_url);
     document.getElementById("chat").appendChild(div);
 
-    const gap = document.createElement("div");
-    gap.className = "gap";
-    document.getElementById("chat").appendChild(gap);
+    requestAnimationFrame(() => {
+      const gap = document.createElement("div");
+      gap.className = "gap";
+      document.getElementById("chat").appendChild(gap);
+    });
   }
 }
 
