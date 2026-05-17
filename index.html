@@ -1,215 +1,66 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
-  height: 100%;
-  font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
-  background: #f5f5f5;
-}
-
-#wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-#chat {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* ■ 応酬単位 */
-.turn {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* ■ 吹き出し */
-.bubble {
-  padding: 14px 16px;
-  border-radius: 12px;
-  max-width: 85%;
-  line-height: 1.7;
-  font-size: 0.93em;
-  word-break: break-word;
-}
-
-.system {
-  background: white;
-  color: #333;
-  align-self: flex-start;
-}
-
-.user {
-  background: #e8e8e8;
-  color: #333;
-  align-self: flex-end;
-}
-
-/* ■ UI */
-#input-area {
-  padding: 12px 16px;
-  background: white;
-  border-top: 1px solid #eee;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-#msg {
-  flex: 1;
-  padding: 12px 16px;
-  border: 1px solid #ddd;
-  border-radius: 24px;
-  font-size: 0.93em;
-  outline: none;
-  color: #333;
-  min-width: 0;
-}
-
-#msg::placeholder {
-  color: #bbb;
-}
-
-#send {
-  padding: 12px 18px;
-  background: #555;
-  color: white;
-  border: none;
-  border-radius: 24px;
-  font-size: 0.93em;
-  cursor: pointer;
-}
-</style>
-
+<meta charset="utf-8">
+<title>hiiro</title>
 </head>
 
 <body>
 
-<div id="wrapper">
+<div id="chat"></div>
 
-  <div id="chat">
-    <div class="bubble system">
-      ひいろです。一緒にどんなお話しますか。
-    </div>
-  </div>
+<!-- プレひいろ -->
+<div id="pre">
+  <p>ひいろです。今日はどんなお話しましょう？</p>
 
-  <div id="input-area">
-    <input id="msg" placeholder="あなたの声をおいてみる" />
-    <button id="send" onclick="send()">送る</button>
-  </div>
-
+  <button onclick="modeSelect('仕事')">仕事</button>
+  <button onclick="modeSelect('恋愛')">恋愛</button>
+  <button onclick="modeSelect('人間関係')">人間関係</button>
+  <button onclick="modeSelect('その他')">その他</button>
+  <button onclick="modeSelect('イベント')">イベント</button>
+  <button onclick="modeSelect('雑談')">雑談</button>
 </div>
+
+<input id="input" placeholder="話してください">
+<button onclick="send()">送信</button>
 
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycby1E9UDbZV3H24zaWSPIcWLpTeiNM1cOYhUtyf9mUlh1FwZ_zJSQr1AiozZpKOGBF-oWg/exec";
+const GAS_URL = "YOUR_GAS_URL";
+let mode = "";
 
-
-// ■ 応酬単位描画
-function renderTurn(userText, reply, question) {
-
-  const wrap = document.createElement("div");
-  wrap.className = "turn";
-
-  // user
-  const user = document.createElement("div");
-  user.className = "bubble user";
-  user.innerText = userText;
-
-  // system block
-  const systemBlock = document.createElement("div");
-  systemBlock.style.display = "flex";
-  systemBlock.style.flexDirection = "column";
-  systemBlock.style.gap = "8px";
-
-  // reply
-  const r = document.createElement("div");
-  r.className = "bubble system";
-  r.innerText = reply;
-
-  systemBlock.appendChild(r);
-
-  // question
-  if (question && question.trim()) {
-    const q = document.createElement("div");
-    q.className = "bubble system";
-    q.innerText = question;
-    systemBlock.appendChild(q);
-  }
-
-  wrap.appendChild(user);
-  wrap.appendChild(systemBlock);
-
-  document.getElementById("chat").appendChild(wrap);
-
-  document.getElementById("chat").scrollTop =
-    document.getElementById("chat").scrollHeight;
+function modeSelect(m) {
+  mode = m;
+  document.getElementById("chat").innerHTML += `<div>（${m}で開始）</div>`;
 }
 
-
-// ■ 送信
 async function send() {
 
-  const input = document.getElementById("msg");
-  const text = input.value.trim();
+  const text = document.getElementById("input").value;
 
-  if (!text) return;
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({ text: text, mode: mode })
+  });
 
-  input.value = "";
+  const data = await res.json();
 
-  try {
+  render(data.output);
 
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        text: text,
-        sessionId: "session_" + Date.now()
-      })
-    });
-
-    const data = await res.json();
-
-    renderTurn(
-      text,
-      data.reply || "……",
-      data.question || ""
-    );
-
-  } catch (err) {
-
-    console.log(err);
-
-    renderTurn(
-      text,
-      "……",
-      ""
-    );
+  // ■ CTA（LP）
+  if (data.next === "lp") {
+    render(`<a href="LP_URL" target="_blank">
+      少し、そのまま一緒に見てみませんか。セッションという形で。
+    </a>`);
   }
+
 }
 
-
-// ■ Enter送信
-document
-  .getElementById("msg")
-  .addEventListener("keypress", function(e) {
-
-    if (e.key === "Enter") {
-      send();
-    }
-
-  });
+function render(msg) {
+  const div = document.createElement("div");
+  div.innerHTML = msg; // 加工なし
+  document.getElementById("chat").appendChild(div);
+}
 
 </script>
 
