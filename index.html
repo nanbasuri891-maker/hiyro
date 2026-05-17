@@ -7,7 +7,7 @@
 <style>
 body{
   margin:0;
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   background:#f3f3f3;
 }
 
@@ -42,27 +42,7 @@ body{
 }
 
 .system{
-  background:#ffffff;
-}
-
-.session-card{
   background:#fff;
-  border:1px solid #e5e5e5;
-  padding:12px;
-  border-radius:14px;
-  margin-top:6px;
-}
-
-.session-btn{
-  margin-top:10px;
-  display:inline-block;
-  padding:8px 12px;
-  border-radius:10px;
-  background:#222;
-  color:#fff;
-  font-size:13px;
-  cursor:pointer;
-  text-decoration:none;
 }
 
 #input{
@@ -97,7 +77,7 @@ button{
 
   <div id="chat">
     <div class="bubble system">
-      ひいろです。一緒にどんなことお話しますか？
+      ひいろです。一緒にどんなこと、お話しますか？
     </div>
   </div>
 
@@ -110,7 +90,7 @@ button{
 
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzekm1wcBpXGqBXzib_A32z-vgR2uQqezRydqAPHFoXp_k-3MMT1-9j29OhMnmPW2Yaxg/exec";
+const GAS_URL = "ここにGASのURL";
 
 function add(text, cls="system"){
   const div = document.createElement("div");
@@ -118,26 +98,6 @@ function add(text, cls="system"){
   div.innerText = text;
 
   document.getElementById("chat").appendChild(div);
-  document.getElementById("chat").scrollTop = 999999;
-}
-
-function addSessionCard(url){
-  const wrap = document.createElement("div");
-  wrap.className = "bubble system";
-
-  wrap.innerHTML = `
-    <div class="session-card">
-      <div>その感じ、もう少し一緒に見てみませんか。</div>
-      <div style="font-size:12px;opacity:0.7;margin-top:6px;">
-        セッションという形で、もう少し深く。
-      </div>
-      <a class="session-btn" href="${url}" target="_blank">
-        セッションへ進む
-      </a>
-    </div>
-  `;
-
-  document.getElementById("chat").appendChild(wrap);
   document.getElementById("chat").scrollTop = 999999;
 }
 
@@ -150,7 +110,7 @@ async function send(){
   add(text, "user");
   input.value = "";
 
-  const res = await fetch(GAS_URL,{
+  const res = await fetch(GAS_URL, {
     method:"POST",
     body: JSON.stringify({ text })
   });
@@ -158,11 +118,6 @@ async function send(){
   const data = await res.json();
 
   add(data.reply, "system");
-
-  // ■ セッションは「会話の中で出る」
-  if(data.exit_type === "session"){
-    addSessionCard(data.session_url);
-  }
 }
 
 </script>
