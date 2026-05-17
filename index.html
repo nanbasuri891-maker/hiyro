@@ -16,92 +16,93 @@ body {
 }
 #app {
   width: 100%;
-  max-width: 720px;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 32px 20px 140px;
+  padding: 24px 16px 140px;
 }
-.logo {
-  text-align: right;
-  margin-bottom: 28px;
+.bubble-row {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 6px;
 }
-.logo img {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.logo-placeholder {
-  width: 36px;
-  height: 36px;
+.bubble-row.hiiro-row { justify-content: flex-start; }
+.bubble-row.user-row { justify-content: flex-end; }
+.icon {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: #efe6e2;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   color: #9b8480;
+  flex-shrink: 0;
+  margin-right: 8px;
+  overflow: hidden;
+}
+.icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .bubble {
-  max-width: 82%;
+  max-width: 75%;
   padding: 10px 14px;
   border-radius: 18px;
   line-height: 1.8;
   font-size: 14px;
-  margin-bottom: 8px;
   white-space: pre-line;
 }
 .hiiro {
   background: #f4eaea;
-  margin-right: auto;
-  border-bottom-left-radius: 8px;
+  border-bottom-left-radius: 4px;
 }
 .user {
   background: #ece7e2;
-  margin-left: auto;
-  border-bottom-right-radius: 8px;
+  border-bottom-right-radius: 4px;
 }
 .time {
   font-size: 11px;
   opacity: 0.4;
-  margin-top: 4px;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
+  padding-left: 36px;
 }
-.left { text-align: left; }
-.right { text-align: right; }
+.time.right {
+  text-align: right;
+  padding-left: 0;
+  padding-right: 4px;
+}
 .menu {
-  margin: 36px 0 56px;
+  margin: 28px 0 44px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 10px;
 }
 .menu div {
   border: 1px solid #d9c8c2;
   border-radius: 999px;
-  padding: 14px 10px;
+  padding: 12px 10px;
   text-align: center;
   cursor: pointer;
   background: #fffdfc;
   transition: 0.25s;
-  font-size: 14px;
+  font-size: 13px;
 }
 .menu div:hover { opacity: 0.7; }
 .input-wrap {
   position: fixed;
-  bottom: 24px;
+  bottom: 20px;
   left: 0;
   width: 100%;
   padding: 0 16px;
 }
 .input-inner {
-  max-width: 720px;
+  max-width: 600px;
   margin: 0 auto;
   background: white;
   border-radius: 999px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
   box-shadow: 0 4px 20px rgba(0,0,0,0.04);
@@ -114,45 +115,43 @@ textarea {
   background: transparent;
   font-size: 14px;
   line-height: 1.8;
-  height: 26px;
+  height: 24px;
   color: #4b403d;
   font-family: inherit;
 }
 button {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border: none;
   border-radius: 999px;
   background: #e7c8c1;
   color: white;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: 0.2s;
 }
 button:hover { opacity: 0.8; }
 .fade {
-  animation: fade 1.2s ease;
+  animation: fade 1s ease;
 }
 @keyframes fade {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.spacer { height: 120px; }
+.spacer { height: 100px; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="logo">
-    <!-- アイコン差し替えはここのsrcを変えるだけ -->
-    <img src="hiiro.png" onerror="this.style.display='none';document.querySelector('.logo-placeholder').style.display='flex';" />
-    <div class="logo-placeholder" style="display:none;">ひ</div>
-  </div>
 
-  <div class="bubble hiiro fade">
-ありがとうございます。
+  <div class="bubble-row hiiro-row fade">
+    <div class="icon">
+      <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'" />
+    </div>
+    <div class="bubble hiiro">ありがとうございます。
 
 今日は、
-どんなお話しましょうか。
+どんなお話しましょうか。</div>
   </div>
 
   <div class="menu" id="menu">
@@ -194,13 +193,22 @@ function selectMode(selected) {
 
 function addUserBubble(text) {
   const chat = document.getElementById("chat");
-  chat.innerHTML += `<div class="bubble user fade">${escapeHtml(text)}</div><div class="time right">${nowTime()}</div>`;
+  chat.innerHTML += `
+    <div class="bubble-row user-row fade">
+      <div class="bubble user">${escapeHtml(text)}</div>
+    </div>
+    <div class="time right">${nowTime()}</div>`;
   scrollBottom();
 }
 
 function addHiiroBubble(text) {
   const chat = document.getElementById("chat");
-  chat.innerHTML += `<div class="bubble hiiro fade">${text}</div><div class="time left">${nowTime()}</div>`;
+  chat.innerHTML += `
+    <div class="bubble-row hiiro-row fade">
+      <div class="icon"><img src="hiiro.png" onerror="this.parentNode.innerText='ひ'" /></div>
+      <div class="bubble hiiro">${text}</div>
+    </div>
+    <div class="time">${nowTime()}</div>`;
   scrollBottom();
 }
 
@@ -220,14 +228,7 @@ async function send() {
       addHiiroBubble(data.output || "……");
       if (data.next === "lp") {
         setTimeout(() => {
-          const chat = document.getElementById("chat");
-          chat.innerHTML += `
-            <div class="bubble hiiro fade">
-少し、そのまま一緒に見てみませんか。<br>セッションという形で。<br><br>
-<a href="${LP_URL}" target="_blank" style="color:#7d5f58;text-decoration:none;border-bottom:1px solid #cdb8b1;padding-bottom:2px;">見てみる</a>
-            </div>
-            <div class="time left">${nowTime()}</div>`;
-          scrollBottom();
+          addHiiroBubble(`少し、そのまま一緒に見てみませんか。<br>セッションという形で。<br><br><a href="${LP_URL}" target="_blank" style="color:#7d5f58;text-decoration:none;border-bottom:1px solid #cdb8b1;">見てみる</a>`);
         }, 1800);
       }
     }, 1400);
