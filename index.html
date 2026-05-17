@@ -158,7 +158,7 @@ async function send() {
 
   } catch (e) {
     gap.remove();
-    addMessage("……", "bot");
+  addMessage(JSON.stringify(data), "bot");
   }
 }
 
