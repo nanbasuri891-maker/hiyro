@@ -80,6 +80,7 @@ html, body {
 </head>
 
 <body>
+
 <div id="wrapper">
 
   <div id="chat">
@@ -87,8 +88,13 @@ html, body {
   </div>
 
   <div id="cta-area">
-    <a href="https://fractalhistyle.wixsite.com/my-site-2" target="_blank">全体を見る（LP）</a>
-    <a href="https://lin.ee/xxxxx" target="_blank">ゆるく受け取る（LINE）</a>
+    <a href="https://fractalhistyle.wixsite.com/my-site-2" target="_blank">
+      全体を見る（LP）
+    </a>
+
+    <a href="https://lin.ee/xxxxx" target="_blank">
+      ゆるく受け取る（LINE）
+    </a>
   </div>
 
   <div id="input-area">
@@ -99,7 +105,8 @@ html, body {
 </div>
 
 <script>
-const GAS_URL = https://script.google.com/macros/s/AKfycbz73BnyZ5CK0k3FijRhbwNhoBkS0BLjUCWED7kJHix6Aty2CgHfk_FQpjgb__kXlPvVvA/exec;
+
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz73BnyZ5CK0k3FijRhbwNhoBkS0BLjUCWED7kJHix6Aty2CgHfk_FQpjgb__kXlPvVvA/exec";
 
 function addMessage(text, type) {
   const div = document.createElement("div");
@@ -127,21 +134,35 @@ async function send() {
   addMessage(text, "user");
   input.value = "";
 
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      text: text,
-      sessionId: "s_" + Date.now()
-    })
-  });
+  const gap = document.createElement("div");
+  gap.className = "bubble bot";
+  gap.innerText = "……";
+  document.getElementById("chat").appendChild(gap);
 
-  const data = await res.json();
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        text: text,
+        sessionId: "s_" + Date.now()
+      })
+    });
 
-  addMessage(data.reply, "bot");
-  showCTA(data.invite);
+    const data = await res.json();
+
+    gap.remove();
+    addMessage(data.reply, "bot");
+
+    // ■ ここが連動ポイント
+    showCTA(data.invite);
+
+  } catch (e) {
+    gap.remove();
+    addMessage("……", "bot");
+  }
 }
+
 </script>
 
 </body>
-</html>
 </html>
