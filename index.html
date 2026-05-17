@@ -1,64 +1,265 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <title>hiiro</title>
+
+<style>
+
+body{
+    background:#ffffff;
+    color:#222;
+    font-family:sans-serif;
+    margin:0;
+    padding:0;
+}
+
+#wrap{
+    width:100%;
+    max-width:680px;
+    margin:0 auto;
+    padding:80px 32px 120px;
+    box-sizing:border-box;
+}
+
+.message{
+    font-size:20px;
+    line-height:2.2;
+    margin-bottom:48px;
+    white-space:pre-line;
+}
+
+.menu{
+    margin-top:56px;
+    margin-bottom:72px;
+}
+
+.menu div{
+    margin:26px 0;
+    cursor:pointer;
+    font-size:18px;
+}
+
+.menu div:hover{
+    opacity:0.5;
+}
+
+.input-area{
+    margin-top:72px;
+}
+
+textarea{
+    width:100%;
+    min-height:120px;
+    border:none;
+    border-bottom:1px solid #ccc;
+    resize:none;
+    font-size:18px;
+    line-height:2;
+    outline:none;
+    padding:16px 0;
+    background:transparent;
+}
+
+button{
+    margin-top:32px;
+    background:none;
+    border:none;
+    font-size:16px;
+    cursor:pointer;
+    opacity:0.7;
+}
+
+button:hover{
+    opacity:1;
+}
+
+.reply{
+    margin-top:72px;
+    line-height:2.2;
+    white-space:pre-line;
+}
+
+.cta{
+    margin-top:88px;
+    line-height:2.4;
+}
+
+.cta a{
+    color:#222;
+    text-decoration:none;
+    border-bottom:1px solid #999;
+    padding-bottom:2px;
+}
+
+.space{
+    height:48px;
+}
+
+</style>
 </head>
 
 <body>
 
-<div id="chat"></div>
+<div id="wrap">
 
-<!-- ■ 初期表示（プレひいろ） -->
-<div id="start">
-  <div>ありがとうございます。今日は何をはなしましょうか？</div>
+    <!-- 初期 -->
+    <div class="message">
+ありがとうございます。
 
-  <button onclick="selectMode('仕事')">仕事</button>
-  <button onclick="selectMode('恋愛')">恋愛</button>
-  <button onclick="selectMode('人間関係')">人間関係</button>
-  <button onclick="selectMode('その他')">その他</button>
-  <button onclick="selectMode('イベント')">イベント</button>
-  <button onclick="selectMode('雑談')">雑談</button>
-</div>
+今日は、
+どんなお話しましょうか。
+    </div>
 
-<!-- ■ 入力 -->
-<div>
-  <input id="input" placeholder="ここに入力">
-  <button onclick="send()">送信</button>
+    <!-- プレひいろ -->
+    <div class="menu" id="menu">
+
+        <div onclick="selectMode('仕事')">仕事</div>
+
+        <div onclick="selectMode('恋愛')">恋愛</div>
+
+        <div onclick="selectMode('人間関係')">人間関係</div>
+
+        <div onclick="selectMode('その他')">その他</div>
+
+        <div onclick="selectMode('イベント')">イベント</div>
+
+        <div onclick="selectMode('雑談')">雑談</div>
+
+    </div>
+
+    <!-- 会話表示 -->
+    <div id="chat"></div>
+
 </div>
 
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycby_MUK56p7XzqsTsQYx9snbS3TqcEFB5LrjT_rQFSalmET6Eb8ZQwm1jzEwZj1yG2qYXA/exec";
+const GAS_URL = "https://script.google.com/macros/library/d/1ba4fZRffcKkpre7r0291KC9SqvwKuhTVphsYJJTDjy44xS697iFwUVFm/2";
+const LP_URL  = "https://fractalhistyle.wixsite.com/my-site-2";
+
 let mode = "";
+let inputShown = false;
 
-function selectMode(m) {
-  mode = m;
-  document.getElementById("chat").innerHTML += `<div>（${m}で開始）</div>`;
+function selectMode(selected){
+
+    mode = selected;
+
+    const chat = document.getElementById("chat");
+
+    chat.innerHTML += `
+        <div class="reply">
+            …${selected}なんですね。
+        </div>
+
+        <div class="space"></div>
+    `;
+
+    if(!inputShown){
+
+        showInput();
+
+        inputShown = true;
+    }
 }
 
-async function send() {
+function showInput(){
 
-  const text = document.getElementById("input").value;
+    const chat = document.getElementById("chat");
 
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      text: text,
-      mode: mode
-    })
-  });
+    chat.innerHTML += `
+        <div class="input-area">
 
-  const data = await res.json();
+            <textarea
+                id="input"
+                placeholder=""
+            ></textarea>
 
-  render(data.output);
+            <br>
 
+            <button onclick="send()">
+                送る
+            </button>
+
+        </div>
+    `;
 }
 
-function render(msg) {
-  const div = document.createElement("div");
-  div.innerHTML = msg;
-  document.getElementById("chat").appendChild(div);
+async function send(){
+
+    const input = document.getElementById("input");
+
+    const text = input.value.trim();
+
+    if(!text) return;
+
+    const chat = document.getElementById("chat");
+
+    chat.innerHTML += `
+        <div class="reply">
+            ${escapeHtml(text)}
+        </div>
+    `;
+
+    input.value = "";
+
+    const res = await fetch(GAS_URL,{
+        method:"POST",
+        body:JSON.stringify({
+            mode:mode,
+            text:text
+        })
+    });
+
+    const data = await res.json();
+
+    // 間
+    setTimeout(()=>{
+
+        chat.innerHTML += `
+            <div class="reply">
+                ${data.output}
+            </div>
+        `;
+
+        // CTA
+        if(data.next === "lp"){
+
+            setTimeout(()=>{
+
+                chat.innerHTML += `
+                    <div class="cta">
+
+                        少し、
+                        そのまま一緒に見てみませんか。<br>
+                        セッションという形で。<br><br>
+
+                        <a href="${LP_URL}" target="_blank">
+                            見てみる
+                        </a>
+
+                    </div>
+                `;
+
+            },1800);
+        }
+
+        window.scrollTo({
+            top:document.body.scrollHeight,
+            behavior:"smooth"
+        });
+
+    },1400);
+}
+
+function escapeHtml(str){
+
+    return str
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
 }
 
 </script>
