@@ -96,25 +96,43 @@ button{
 
 const GAS_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQMkIxWVf_pnfnBrZjo0zvwcAmMF9qFDq1j0D5Xrlz8QQ_GlxQzsB9NJm89KvDXi57puiUe8vUM2g6CwdfNCfzmzIaMm-AtMp6ozEjuYv8ZCJ_binvpwNh88mvnoZmV0EAigPwoV0Bdg1UOLWU-l7oxWXuusr7SCjziKFMOqpQkore00fUnJlxhd6YOi6Svn9kxbXBJoYlF1DlP846kdv_JrmDlrMKTi8NGmxVQlkb9TOCNGBmFtgQHYJB3-s3q3Fm8Ipnm4KS1Lrw6C3s0LcVZ8GbGQA&lib=MMmmfd84qT9DxAMG-8CkK5C0SNqudikxB";
 
-function add(text, cls="system"){
+const chat = document.getElementById("chat");
 
-  const chat = document.getElementById("chat");
 
-  const div = document.createElement("div");
-  div.className = "bubble " + cls;
-  div.innerText = text;
+// ■ 分割対応版（Claude統合）
+function addMessage(text, type){
 
-  chat.appendChild(div);
+  const parts = String(text).split('\n\n').filter(p => p.trim());
 
-  // ■ ここが重要（余白を確実に分離）
-  requestAnimationFrame(() => {
-    const gap = document.createElement("div");
-    gap.className = "gap";
-    chat.appendChild(gap);
+  parts.forEach((part, index) => {
 
-    chat.scrollTop = chat.scrollHeight;
+    setTimeout(() => {
+
+      const div = document.createElement("div");
+      div.className = "bubble " + type;
+      div.innerText = part.trim();
+
+      chat.appendChild(div);
+
+      requestAnimationFrame(() => {
+        const gap = document.createElement("div");
+        gap.className = "gap";
+        chat.appendChild(gap);
+
+        chat.scrollTop = chat.scrollHeight;
+      });
+
+    }, index * 600);
+
   });
 }
+
+
+// ■ 互換用（旧呼び出しも動く）
+function add(text, cls="system"){
+  addMessage(text, cls);
+}
+
 
 async function send(){
 
@@ -135,25 +153,25 @@ async function send(){
 
   const data = await res.json();
 
-  add(data.reply || "……", "system");
+  addMessage(data.reply || "……", "system");
 
   if(data.question){
-    add(data.question, "system");
+    addMessage(data.question, "system");
   }
 
   if(data.exit_type === "session"){
-    add("その感じ、もう少し一緒に見てみませんか。", "system");
+    addMessage("その感じ、もう少し一緒に見てみませんか。", "system");
 
     const div = document.createElement("div");
     div.className = "bubble system";
     div.innerText = "セッションへ進む";
     div.onclick = () => window.open(data.session_url);
-    document.getElementById("chat").appendChild(div);
+    chat.appendChild(div);
 
     requestAnimationFrame(() => {
       const gap = document.createElement("div");
       gap.className = "gap";
-      document.getElementById("chat").appendChild(gap);
+      chat.appendChild(gap);
     });
   }
 }
