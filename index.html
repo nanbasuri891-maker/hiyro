@@ -3,26 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 html, body {
   height: 100%;
   font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
   background: #f5f5f5;
 }
+
 #wrapper {
   display: flex;
   flex-direction: column;
   height: 100vh;
 }
+
 #chat {
   flex: 1;
   overflow-y: auto;
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+/* ■ 応酬単位 */
+.turn {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
+
+/* ■ 吹き出し */
 .bubble {
   padding: 14px 16px;
   border-radius: 12px;
@@ -31,16 +44,20 @@ html, body {
   font-size: 0.93em;
   word-break: break-word;
 }
+
 .system {
   background: white;
   color: #333;
   align-self: flex-start;
 }
+
 .user {
   background: #e8e8e8;
   color: #333;
   align-self: flex-end;
 }
+
+/* ■ UI */
 #input-area {
   padding: 12px 16px;
   background: white;
@@ -49,6 +66,7 @@ html, body {
   gap: 8px;
   align-items: center;
 }
+
 #msg {
   flex: 1;
   padding: 12px 16px;
@@ -59,7 +77,7 @@ html, body {
   color: #333;
   min-width: 0;
 }
-#msg::placeholder { color: #bbb; }
+
 #send {
   padding: 12px 18px;
   background: #555;
@@ -68,61 +86,105 @@ html, body {
   border-radius: 24px;
   font-size: 0.93em;
   cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 </style>
+
 </head>
+
 <body>
+
 <div id="wrapper">
+
   <div id="chat">
     <div class="bubble system">ひいろです。一緒にどんなお話しますか。</div>
   </div>
+
   <div id="input-area">
     <input id="msg" placeholder="あなたの声をおいてみる" />
     <button id="send" onclick="send()">送る</button>
   </div>
+
 </div>
+
 <script>
+
 const GAS_URL = "https://script.google.com/macros/s/AKfycbx_Av2ed39QT5B4_N3SNGcI7lkkoc2v5bPlVQ_B1jN2lGe3lTS0iyMIOWI4ym6IT61eow/exec";
 
-function addMessage(text, type) {
-  const parts = String(text).split('\n\n').filter(p => p.trim());
-  parts.forEach((part, index) => {
-    setTimeout(() => {
-      const div = document.createElement('div');
-      div.className = 'bubble ' + type;
-      div.innerText = part.trim();
-      document.getElementById('chat').appendChild(div);
-      document.getElementById('chat').scrollTop = 999999;
-    }, index * 600);
-  });
+
+// ■ 応酬単位で描画
+function renderTurn(userText, reply, question) {
+
+  const wrap = document.createElement("div");
+  wrap.className = "turn";
+
+  const user = document.createElement("div");
+  user.className = "bubble user";
+  user.innerText = userText;
+
+  const systemBlock = document.createElement("div");
+
+  const r = document.createElement("div");
+  r.className = "bubble system";
+  r.innerText = reply;
+
+  systemBlock.appendChild(r);
+
+  if (question && question.trim()) {
+    const q = document.createElement("div");
+    q.className = "bubble system";
+    q.innerText = question;
+    systemBlock.appendChild(q);
+  }
+
+  wrap.appendChild(user);
+  wrap.appendChild(systemBlock);
+
+  document.getElementById("chat").appendChild(wrap);
+  document.getElementById("chat").scrollTop = 999999;
 }
 
+
 async function send() {
+
   const input = document.getElementById('msg');
   const text = input.value.trim();
   if (!text) return;
-  addMessage(text, 'user');
+
   input.value = '';
+
   try {
+
     const res = await fetch(GAS_URL, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
         text: text,
         sessionId: "session_" + Date.now()
       })
     });
+
     const data = await res.json();
-    addMessage(data.reply || "……", "system");
-  } catch(err) {
-    addMessage("……", "system");
+
+    renderTurn(
+      text,
+      data.reply || "……",
+      data.question || ""
+    );
+
+  } catch (err) {
+    renderTurn(text, "……", "");
   }
 }
 
+
+// ■ Enter送信
 document.getElementById('msg').addEventListener('keypress', function(e) {
   if (e.key === 'Enter') send();
 });
+
 </script>
+
 </body>
 </html>
