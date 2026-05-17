@@ -3,389 +3,246 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>ひいろ</title>
-
 <style>
-
-*{
-    box-sizing:border-box;
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  background: #f8f5f3;
+  font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+  color: #4b403d;
+  font-size: 14px;
 }
-
-body{
-    margin:0;
-    padding:0;
-    background:#f8f5f3;
-    font-family:
-    "Hiragino Sans",
-    "Noto Sans JP",
-    sans-serif;
-    color:#4b403d;
+#app {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 20px 140px;
 }
-
-#app{
-    width:100%;
-    max-width:720px;
-    margin:0 auto;
-    padding:40px 24px 140px;
+.logo {
+  text-align: right;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
-
-.logo{
-    text-align:right;
-    margin-bottom:36px;
+.logo img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
 }
-
-.logo span{
-    background:#efe6e2;
-    padding:12px 22px;
-    border-radius:999px;
-    font-size:15px;
-    letter-spacing:0.08em;
+.logo-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #efe6e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #9b8480;
 }
-
-.bubble{
-    max-width:82%;
-    padding:22px 26px;
-    border-radius:28px;
-    line-height:2;
-    font-size:17px;
-    margin-bottom:14px;
-    white-space:pre-line;
-    position:relative;
+.bubble {
+  max-width: 82%;
+  padding: 16px 20px;
+  border-radius: 22px;
+  line-height: 1.9;
+  font-size: 14px;
+  margin-bottom: 10px;
+  white-space: pre-line;
 }
-
-.hiiro{
-    background:#f4eaea;
-    margin-right:auto;
-    border-bottom-left-radius:10px;
+.hiiro {
+  background: #f4eaea;
+  margin-right: auto;
+  border-bottom-left-radius: 8px;
 }
-
-.user{
-    background:#ece7e2;
-    margin-left:auto;
-    border-bottom-right-radius:10px;
+.user {
+  background: #ece7e2;
+  margin-left: auto;
+  border-bottom-right-radius: 8px;
 }
-
-.time{
-    font-size:12px;
-    opacity:0.45;
-    margin-top:6px;
-    margin-bottom:42px;
+.time {
+  font-size: 11px;
+  opacity: 0.4;
+  margin-top: 4px;
+  margin-bottom: 32px;
 }
-
-.left{
-    text-align:left;
+.left { text-align: left; }
+.right { text-align: right; }
+.menu {
+  margin: 36px 0 56px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
-
-.right{
-    text-align:right;
+.menu div {
+  border: 1px solid #d9c8c2;
+  border-radius: 999px;
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer;
+  background: #fffdfc;
+  transition: 0.25s;
+  font-size: 14px;
 }
-
-.menu{
-    margin:48px 0 72px;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:18px;
+.menu div:hover { opacity: 0.7; }
+.input-wrap {
+  position: fixed;
+  bottom: 24px;
+  left: 0;
+  width: 100%;
+  padding: 0 16px;
 }
-
-.menu div{
-    border:1px solid #d9c8c2;
-    border-radius:999px;
-    padding:18px 12px;
-    text-align:center;
-    cursor:pointer;
-    background:#fffdfc;
-    transition:0.25s;
-    font-size:16px;
+.input-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 999px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
 }
-
-.menu div:hover{
-    opacity:0.7;
+textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-size: 14px;
+  line-height: 1.8;
+  height: 26px;
+  color: #4b403d;
+  font-family: inherit;
 }
-
-.input-wrap{
-    position:fixed;
-    bottom:28px;
-    left:0;
-    width:100%;
-    padding:0 18px;
+button {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 999px;
+  background: #e7c8c1;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
 }
-
-.input-inner{
-    max-width:720px;
-    margin:0 auto;
-    background:white;
-    border-radius:999px;
-    padding:14px 18px;
-    display:flex;
-    align-items:center;
-    box-shadow:
-    0 4px 20px rgba(0,0,0,0.04);
+button:hover { opacity: 0.8; }
+.fade {
+  animation: fade 1.2s ease;
 }
-
-textarea{
-    flex:1;
-    border:none;
-    outline:none;
-    resize:none;
-    background:transparent;
-    font-size:16px;
-    line-height:1.8;
-    height:28px;
-    color:#4b403d;
-    font-family:inherit;
+@keyframes fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-button{
-    width:44px;
-    height:44px;
-    border:none;
-    border-radius:999px;
-    background:#e7c8c1;
-    color:white;
-    cursor:pointer;
-    font-size:16px;
-    transition:0.2s;
-}
-
-button:hover{
-    opacity:0.8;
-}
-
-.fade{
-    animation:fade 1.2s ease;
-}
-
-@keyframes fade{
-    from{
-        opacity:0;
-        transform:translateY(8px);
-    }
-
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
-}
-
-.spacer{
-    height:120px;
-}
-
+.spacer { height: 120px; }
 </style>
 </head>
-
 <body>
-
 <div id="app">
+  <div class="logo">
+    <!-- アイコン差し替えはここのsrcを変えるだけ -->
+    <img src="hiiro.png" onerror="this.style.display='none';document.querySelector('.logo-placeholder').style.display='flex';" />
+    <div class="logo-placeholder" style="display:none;">ひ</div>
+  </div>
 
-    <!-- ロゴ -->
-    <div class="logo">
-        <span>ひいろ</span>
-    </div>
-
-    <!-- 初期メッセージ -->
-    <div class="bubble hiiro fade">
+  <div class="bubble hiiro fade">
 ありがとうございます。
 
 今日は、
 どんなお話しましょうか。
-    </div>
+  </div>
 
-    <!-- メニュー -->
-    <div class="menu" id="menu">
+  <div class="menu" id="menu">
+    <div onclick="selectMode('仕事')">仕事</div>
+    <div onclick="selectMode('恋愛')">恋愛</div>
+    <div onclick="selectMode('人間関係')">人間関係</div>
+    <div onclick="selectMode('その他')">その他</div>
+    <div onclick="selectMode('イベント')">イベント</div>
+    <div onclick="selectMode('雑談')">雑談</div>
+  </div>
 
-        <div onclick="selectMode('仕事')">仕事</div>
-
-        <div onclick="selectMode('恋愛')">恋愛</div>
-
-        <div onclick="selectMode('人間関係')">人間関係</div>
-
-        <div onclick="selectMode('その他')">その他</div>
-
-        <div onclick="selectMode('イベント')">イベント</div>
-
-        <div onclick="selectMode('雑談')">雑談</div>
-
-    </div>
-
-    <!-- 会話 -->
-    <div id="chat"></div>
-
-    <div class="spacer"></div>
-
+  <div id="chat"></div>
+  <div class="spacer"></div>
 </div>
 
-<!-- 入力 -->
 <div class="input-wrap">
-
-    <div class="input-inner">
-
-        <textarea
-            id="input"
-            placeholder="..."
-        ></textarea>
-
-        <button onclick="send()">
-            ➤
-        </button>
-
-    </div>
-
+  <div class="input-inner">
+    <textarea id="input" placeholder="..."></textarea>
+    <button onclick="send()">➤</button>
+  </div>
 </div>
 
 <script>
-
 const GAS_URL = "https://script.google.com/macros/s/AKfycbw7Nkcqx0Kw8bFo2myd6vVKXdYOdy1d7LQkd3pmpK_q6qzRtW1e481wM_PLMYW8ArlzUg/exec";
-const LP_URL  = "https://fractalhistyle.wixsite.com/my-site-2";
-
+const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
 let mode = "";
 
-function nowTime(){
-
-    const d = new Date();
-
-    return d.getHours().toString().padStart(2,'0')
-        + ':'
-        + d.getMinutes().toString().padStart(2,'0');
+function nowTime() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
 }
 
-function selectMode(selected){
-
-    mode = selected;
-
-    addUserBubble(selected);
-
-    setTimeout(()=>{
-
-        addHiiroBubble(`…${selected}なんですね。`);
-
-    },700);
+function selectMode(selected) {
+  mode = selected;
+  document.getElementById("menu").style.display = "none";
+  addUserBubble(selected);
+  setTimeout(() => addHiiroBubble(`…${selected}なんですね。`), 700);
 }
 
-function addUserBubble(text){
-
-    const chat = document.getElementById("chat");
-
-    chat.innerHTML += `
-        <div class="bubble user fade">
-            ${escapeHtml(text)}
-        </div>
-
-        <div class="time right">
-            ${nowTime()}
-        </div>
-    `;
-
-    scrollBottom();
+function addUserBubble(text) {
+  const chat = document.getElementById("chat");
+  chat.innerHTML += `<div class="bubble user fade">${escapeHtml(text)}</div><div class="time right">${nowTime()}</div>`;
+  scrollBottom();
 }
 
-function addHiiroBubble(text){
-
-    const chat = document.getElementById("chat");
-
-    chat.innerHTML += `
-        <div class="bubble hiiro fade">
-            ${text}
-        </div>
-
-        <div class="time left">
-            ${nowTime()}
-        </div>
-    `;
-
-    scrollBottom();
+function addHiiroBubble(text) {
+  const chat = document.getElementById("chat");
+  chat.innerHTML += `<div class="bubble hiiro fade">${text}</div><div class="time left">${nowTime()}</div>`;
+  scrollBottom();
 }
 
-async function send(){
-
-    const input = document.getElementById("input");
-
-    const text = input.value.trim();
-
-    if(!text) return;
-
-    addUserBubble(text);
-
-    input.value = "";
-
-    const res = await fetch(GAS_URL,{
-        method:"POST",
-        body:JSON.stringify({
-            mode:mode,
-            text:text
-        })
+async function send() {
+  const input = document.getElementById("input");
+  const text = input.value.trim();
+  if (!text) return;
+  addUserBubble(text);
+  input.value = "";
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      body: JSON.stringify({ mode, text })
     });
-
     const data = await res.json();
-
-    setTimeout(()=>{
-
-        addHiiroBubble(data.output);
-
-        // CTA
-        if(data.next === "lp"){
-
-            setTimeout(()=>{
-
-                const chat = document.getElementById("chat");
-
-                chat.innerHTML += `
-                    <div class="bubble hiiro fade">
-
-                        少し、
-                        そのまま一緒に見てみませんか。<br>
-                        セッションという形で。
-
-                        <br><br>
-
-                        <a
-                            href="${LP_URL}"
-                            target="_blank"
-                            style="
-                                color:#7d5f58;
-                                text-decoration:none;
-                                border-bottom:1px solid #cdb8b1;
-                                padding-bottom:2px;
-                            "
-                        >
-                            見てみる
-                        </a>
-
-                    </div>
-
-                    <div class="time left">
-                        ${nowTime()}
-                    </div>
-                `;
-
-                scrollBottom();
-
-            },1800);
-        }
-
-    },1400);
+    setTimeout(() => {
+      addHiiroBubble(data.output || "……");
+      if (data.next === "lp") {
+        setTimeout(() => {
+          const chat = document.getElementById("chat");
+          chat.innerHTML += `
+            <div class="bubble hiiro fade">
+少し、そのまま一緒に見てみませんか。<br>セッションという形で。<br><br>
+<a href="${LP_URL}" target="_blank" style="color:#7d5f58;text-decoration:none;border-bottom:1px solid #cdb8b1;padding-bottom:2px;">見てみる</a>
+            </div>
+            <div class="time left">${nowTime()}</div>`;
+          scrollBottom();
+        }, 1800);
+      }
+    }, 1400);
+  } catch(err) {
+    setTimeout(() => addHiiroBubble("……"), 1400);
+  }
 }
 
-function scrollBottom(){
-
-    window.scrollTo({
-        top:document.body.scrollHeight,
-        behavior:"smooth"
-    });
+function scrollBottom() {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 }
 
-function escapeHtml(str){
-
-    return str
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
+function escapeHtml(str) {
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 }
-
 </script>
-
 </body>
 </html>
