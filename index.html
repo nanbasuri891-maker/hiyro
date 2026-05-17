@@ -1,126 +1,60 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body{
-  margin:0;
-  font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  background:#f3f3f3;
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: "ok" }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-#wrap{
-  display:flex;
-  flex-direction:column;
-  height:100vh;
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents || "{}");
+    const userText = String(body.text || "").trim();
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName("Behavior");
+    const data = sheet.getDataRange().getValues();
+
+    let reply = "……";
+    let exitType = "none";
+    let sessionUrl = "";
+
+    for (let i = 1; i < data.length; i++) {
+
+      const trigger = String(data[i][0] || "");
+      const r = String(data[i][2] || "");
+      const q = String(data[i][3] || "");
+      const e = String(data[i][4] || "");
+      const url = String(data[i][5] || "");
+
+      if (!trigger) continue;
+
+      if (userText.includes(trigger)) {
+        reply = r + (q ? "\n\n" + q : "");
+        exitType = e || "none";
+        sessionUrl = url || "";
+        break;
+      }
+    }
+
+    // fallback
+    if (!reply || reply === "……") {
+      reply = "……もう少し聞いてもいいですか。";
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        reply: reply,
+        exit_type: exitType,
+        session_url: sessionUrl
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        reply: "ひいろです。一緒にどんなこと、お話しますか？",
+        exit_type: "none",
+        session_url: ""
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
-
-#chat{
-  flex:1;
-  overflow:auto;
-  padding:18px 14px;
-}
-
-.bubble{
-  display:inline-block;
-  padding:10px 12px;
-  margin:8px 0;
-  border-radius:14px;
-  max-width:78%;
-  line-height:1.5;
-  font-size:14px;
-  background:#fff;
-  color:#222;
-  box-shadow:0 1px 2px rgba(0,0,0,0.06);
-}
-
-.user{
-  margin-left:auto;
-  background:#e9e9e9;
-}
-
-.system{
-  background:#fff;
-}
-
-#input{
-  display:flex;
-  padding:10px;
-  background:#fff;
-  border-top:1px solid #e8e8e8;
-}
-
-input{
-  flex:1;
-  padding:10px 12px;
-  border:none;
-  outline:none;
-  font-size:14px;
-}
-
-button{
-  background:#222;
-  color:#fff;
-  border:none;
-  padding:10px 14px;
-  border-radius:10px;
-}
-</style>
-
-</head>
-
-<body>
-
-<div id="wrap">
-
-  <div id="chat">
-    <div class="bubble system">
-      ひいろです。一緒にどんなこと、お話しますか？
-    </div>
-  </div>
-
-  <div id="input">
-    <input id="msg" placeholder="あなたの声をおいてみる">
-    <button onclick="send()">送信</button>
-  </div>
-
-</div>
-
-<script>
-
-const GAS_URL = "ここにGASのURL";
-
-function add(text, cls="system"){
-  const div = document.createElement("div");
-  div.className = "bubble " + cls;
-  div.innerText = text;
-
-  document.getElementById("chat").appendChild(div);
-  document.getElementById("chat").scrollTop = 999999;
-}
-
-async function send(){
-
-  const input = document.getElementById("msg");
-  const text = input.value.trim();
-  if(!text) return;
-
-  add(text, "user");
-  input.value = "";
-
-  const res = await fetch(GAS_URL, {
-    method:"POST",
-    body: JSON.stringify({ text })
-  });
-
-  const data = await res.json();
-
-  add(data.reply, "system");
-}
-
-</script>
-
-</body>
-</html>
