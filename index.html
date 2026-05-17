@@ -5,125 +5,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: sans-serif; margin:0; background:#f5f5f5; }
+#wrap { display:flex; flex-direction:column; height:100vh; }
+#chat { flex:1; overflow:auto; padding:16px; }
+.bubble { padding:10px 12px; margin:8px 0; border-radius:10px; max-width:80%; background:#fff; }
+.user { margin-left:auto; background:#e6e6e6; }
+#input { display:flex; padding:10px; background:#fff; }
+input { flex:1; padding:10px; }
+button { padding:10px 14px; }
 
-html, body {
-  height: 100%;
-  font-family: sans-serif;
-  background: #f5f5f5;
+#cta {
+  display:flex;
+  gap:8px;
+  padding:10px;
+  background:#fff;
+  border-top:1px solid #ddd;
 }
-
-#wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
-
-#chat {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-}
-
-.bubble {
-  background: #fff;
-  padding: 12px 14px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  max-width: 85%;
-  word-break: break-word;
-}
-
-.user { margin-left: auto; background: #e8e8e8; }
-.bot { margin-right: auto; }
-
-#input-area {
-  display: flex;
-  padding: 10px;
-  border-top: 1px solid #ddd;
-  background: #fff;
-}
-
-#msg {
-  flex: 1;
-  padding: 10px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-}
-
-#send {
-  margin-left: 8px;
-  padding: 10px 14px;
-  border: none;
-  border-radius: 20px;
-  background: #444;
-  color: #fff;
-}
-
-#cta-area {
-  display: none;
-  padding: 10px;
-  flex-direction: column;
-  gap: 8px;
-}
-
-#cta-area a {
-  padding: 10px;
-  text-align: center;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  text-decoration: none;
-  color: #333;
-  background: #fff;
+.cta-btn {
+  flex:1;
+  padding:10px;
+  text-align:center;
+  background:#eee;
+  border-radius:8px;
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
-
-<div id="wrapper">
+<div id="wrap">
 
   <div id="chat">
-    <div class="bubble bot">こんにちは。ひいろです。</div>
+    <div class="bubble">ひいろです。今日はどんなことお話ししましょう？</div>
   </div>
 
-  <div id="cta-area">
-    <a href="https://fractalhistyle.wixsite.com/my-site-2" target="_blank">
-      全体を見る（LP）
-    </a>
-
-    <a href="https://lin.ee/xxxxx" target="_blank">
-      ゆるく受け取る（LINE）
-    </a>
+  <div id="input">
+    <input id="msg" placeholder="話してみてください">
+    <button onclick="send()">送信</button>
   </div>
 
-  <div id="input-area">
-    <input id="msg" placeholder="入力してください">
-    <button id="send" onclick="send()">送信</button>
+  <div id="cta">
+    <div class="cta-btn" onclick="go('session')">セッション</div>
+    <div class="cta-btn" onclick="go('lp')">LP</div>
+    <div class="cta-btn" onclick="go('line')">LINE</div>
   </div>
 
 </div>
 
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzhXNcSVeAr4OBNdTpAhdt6VlXpjcscxDUIL0fZ01_PHUs1uecZ06Vv-GeNhtx8HwfX/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwz1vdSXipbtsPsVs0rrNXBACQeFWXN4_NSoewRxpMP6LojSDUS9EGVpoQM2f9Em_SCjw/exec";
 
-function addMessage(text, type) {
+function add(text, cls="") {
   const div = document.createElement("div");
-  div.className = "bubble " + type;
+  div.className = "bubble " + cls;
   div.innerText = text;
   document.getElementById("chat").appendChild(div);
   document.getElementById("chat").scrollTop = 999999;
-}
-
-function showCTA(invite) {
-  const area = document.getElementById("cta-area");
-
-  if (invite === "lp" || invite === "line") {
-    area.style.display = "flex";
-  } else {
-    area.style.display = "none";
-  }
 }
 
 async function send() {
@@ -131,34 +69,30 @@ async function send() {
   const text = input.value.trim();
   if (!text) return;
 
-  addMessage(text, "user");
+  add(text, "user");
   input.value = "";
 
-  const gap = document.createElement("div");
-  gap.className = "bubble bot";
-  gap.innerText = "……";
-  document.getElementById("chat").appendChild(gap);
+  const res = await fetch(GAS_URL, {
+    method:"POST",
+    body: JSON.stringify({
+      text,
+      sessionId: "s_" + Date.now()
+    })
+  });
 
-  try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        text: text,
-        sessionId: "s_" + Date.now()
-      })
-    });
+  const data = await res.json();
+  add(data.reply);
+}
 
-    const data = await res.json();
-
-    gap.remove();
-    addMessage(data.reply, "bot");
-
-    // ■ ここが連動ポイント
-    showCTA(data.invite);
-
-  } catch (e) {
-    gap.remove();
-  addMessage(JSON.stringify(data), "bot");
+function go(type){
+  if(type === "session"){
+    window.open("https://your-session-link.com");
+  }
+  if(type === "lp"){
+    window.open("https://your-lp-link.com");
+  }
+  if(type === "line"){
+    window.open("https://line.me/");
   }
 }
 
