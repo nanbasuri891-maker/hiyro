@@ -9,27 +9,30 @@
 
 <div id="chat"></div>
 
-<!-- プレひいろ -->
-<div id="pre">
-  <p>ひいろです。今日はどんなお話しましょう？</p>
+<!-- ■ 初期表示（プレひいろ） -->
+<div id="start">
+  <div>ありがとうございます。今日は何をはなしましょうか？</div>
 
-  <button onclick="modeSelect('仕事')">仕事</button>
-  <button onclick="modeSelect('恋愛')">恋愛</button>
-  <button onclick="modeSelect('人間関係')">人間関係</button>
-  <button onclick="modeSelect('その他')">その他</button>
-  <button onclick="modeSelect('イベント')">イベント</button>
-  <button onclick="modeSelect('雑談')">雑談</button>
+  <button onclick="selectMode('仕事')">仕事</button>
+  <button onclick="selectMode('恋愛')">恋愛</button>
+  <button onclick="selectMode('人間関係')">人間関係</button>
+  <button onclick="selectMode('その他')">その他</button>
+  <button onclick="selectMode('イベント')">イベント</button>
+  <button onclick="selectMode('雑談')">雑談</button>
 </div>
 
-<input id="input" placeholder="話してください">
-<button onclick="send()">送信</button>
+<!-- ■ 入力 -->
+<div>
+  <input id="input" placeholder="ここに入力">
+  <button onclick="send()">送信</button>
+</div>
 
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw3jTkQWtfnerR9CgiVDENmSwKcW1MBt082dz5s5shgvaTOC7DRwiX8fkzmf83_rdgjyA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycby_MUK56p7XzqsTsQYx9snbS3TqcEFB5LrjT_rQFSalmET6Eb8ZQwm1jzEwZj1yG2qYXA/exec";
 let mode = "";
 
-function modeSelect(m) {
+function selectMode(m) {
   mode = m;
   document.getElementById("chat").innerHTML += `<div>（${m}で開始）</div>`;
 }
@@ -40,25 +43,21 @@ async function send() {
 
   const res = await fetch(GAS_URL, {
     method: "POST",
-    body: JSON.stringify({ text: text, mode: mode })
+    body: JSON.stringify({
+      text: text,
+      mode: mode
+    })
   });
 
   const data = await res.json();
 
   render(data.output);
 
-  // ■ CTA（LP）
-  if (data.next === "lp") {
-    render(`<a href="LP_URL" target="_blank">
-      少し、そのまま一緒に見てみませんか。セッションという形で。
-    </a>`);
-  }
-
 }
 
 function render(msg) {
   const div = document.createElement("div");
-  div.innerHTML = msg; // 加工なし
+  div.innerHTML = msg;
   document.getElementById("chat").appendChild(div);
 }
 
