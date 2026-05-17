@@ -82,14 +82,18 @@ body {
 .menu div {
   border: 1px solid #d9c8c2;
   border-radius: 999px;
-  padding: 12px 10px;
+  padding: 6px 10px;   /* ←ここ半分 */
   text-align: center;
   cursor: pointer;
   background: #fffdfc;
   transition: 0.25s;
-  font-size: 13px;
+  font-size: 12px;     /* ←少しだけ下げる */
+  line-height: 1.4;
 }
-.menu div:hover { opacity: 0.7; }
+.menu div {
+  padding: 5px 8px;
+  font-size: 11px;
+}
 .input-wrap {
   position: fixed;
   bottom: 20px;
@@ -148,10 +152,8 @@ button:hover { opacity: 0.8; }
     <div class="icon">
       <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'" />
     </div>
-    <div class="bubble hiiro">ありがとうございます。
-
-今日は、
-どんなお話しましょうか。</div>
+    <div class="bubble hiiro">こんにちは
+どんなお話しましょうか</div>
   </div>
 
   <div class="menu" id="menu">
