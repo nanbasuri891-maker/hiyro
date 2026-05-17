@@ -1,60 +1,157 @@
-function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({ status: "ok" }))
-    .setMimeType(ContentService.MimeType.JSON);
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+  background:#f3f3f3;
 }
 
-function doPost(e) {
-  try {
-    const body = JSON.parse(e.postData.contents || "{}");
-    const userText = String(body.text || "").trim();
+#wrap{
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+}
 
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const sheet = ss.getSheetByName("Behavior");
-    const data = sheet.getDataRange().getValues();
+#chat{
+  flex:1;
+  overflow:auto;
+  padding:18px 14px;
+}
 
-    let reply = "……";
-    let exitType = "none";
-    let sessionUrl = "";
+.bubble{
+  display:inline-block;
+  padding:10px 12px;
+  margin:10px 0;
+  border-radius:14px;
+  max-width:78%;
+  line-height:1.6;
+  font-size:14px;
+  background:#fff;
+  color:#222;
+  box-shadow:0 1px 2px rgba(0,0,0,0.06);
+}
 
-    for (let i = 1; i < data.length; i++) {
+.user{
+  margin-left:auto;
+  background:#e9e9e9;
+}
 
-      const trigger = String(data[i][0] || "");
-      const r = String(data[i][2] || "");
-      const q = String(data[i][3] || "");
-      const e = String(data[i][4] || "");
-      const url = String(data[i][5] || "");
+.system{
+  background:#fff;
+}
 
-      if (!trigger) continue;
+.gap{
+  height:10px;
+}
 
-      if (userText.includes(trigger)) {
-        reply = r + (q ? "\n\n" + q : "");
-        exitType = e || "none";
-        sessionUrl = url || "";
-        break;
-      }
-    }
+#input{
+  display:flex;
+  padding:10px;
+  background:#fff;
+  border-top:1px solid #e8e8e8;
+}
 
-    // fallback
-    if (!reply || reply === "……") {
-      reply = "……もう少し聞いてもいいですか。";
-    }
+input{
+  flex:1;
+  padding:10px 12px;
+  border:none;
+  outline:none;
+  font-size:14px;
+}
 
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        reply: reply,
-        exit_type: exitType,
-        session_url: sessionUrl
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
+button{
+  background:#222;
+  color:#fff;
+  border:none;
+  padding:10px 14px;
+  border-radius:10px;
+}
+</style>
 
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        reply: "ひいろです。一緒にどんなこと、お話しますか？",
-        exit_type: "none",
-        session_url: ""
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
+</head>
+
+<body>
+
+<div id="wrap">
+
+  <div id="chat">
+    <div class="bubble system">
+      ひいろです。一緒にどんなこと、お話しますか？
+    </div>
+  </div>
+
+  <div id="input">
+    <input id="msg" placeholder="あなたの声をおいてみる">
+    <button onclick="send()">送信</button>
+  </div>
+
+</div>
+
+<script>
+
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzD3snVn6YD5ak602j1uW8QvsDrN2V634PM44qHSKuJ4Rj-m-3J6DLxJT9GpT4dBYCZ_Q/exec";
+
+function add(text, cls="system"){
+  const div = document.createElement("div");
+  div.className = "bubble " + cls;
+  div.innerText = text;
+
+  document.getElementById("chat").appendChild(div);
+
+  // 余白（旧質感の核心）
+  const gap = document.createElement("div");
+  gap.className = "gap";
+  document.getElementById("chat").appendChild(gap);
+
+  document.getElementById("chat").scrollTop = 999999;
+}
+
+async function send(){
+
+  const input = document.getElementById("msg");
+  const text = input.value.trim();
+  if(!text) return;
+
+  add(text, "user");
+  input.value = "";
+
+  const res = await fetch(GAS_URL,{
+    method:"POST",
+    body: JSON.stringify({ text })
+  });
+
+  const data = await res.json();
+
+  // 応酬（そのまま）
+  add(data.reply, "system");
+
+  // 問いは別バブル（余白前提）
+  if(data.question){
+    add(data.question, "system");
+  }
+
+  // セッションは流れの中
+  if(data.exit_type === "session"){
+    add("その感じ、もう少し一緒に見てみませんか。", "system");
+
+    const div = document.createElement("div");
+    div.className = "bubble system";
+    div.innerText = "セッションへ進む";
+    div.onclick = () => window.open(data.session_url);
+    document.getElementById("chat").appendChild(div);
+
+    const gap = document.createElement("div");
+    gap.className = "gap";
+    document.getElementById("chat").appendChild(gap);
   }
 }
+
+</script>
+
+</body>
+</html>
