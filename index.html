@@ -244,33 +244,50 @@ button {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbznqcOFWAzTpEUjUbAxLL2pHaADEv9mEBIWfaJhgHPRyjMKgUyqqx0SkKku9Ljb5Vzf/exec";
-const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
+const GAS_URL        = "https://script.google.com/macros/s/AKfycbznqcOFWAzTpEUjUbAxLL2pHaADEv9mEBIWfaJhgHPRyjMKgUyqqx0SkKku9Ljb5Vzf/exec";
+const LP_URL         = "https://fractalhistyle.wixsite.com/my-site-2";
 const GAS_TIMEOUT_MS = 15000;
 
-const inputEl  = document.getElementById("input");
-const sendBtn  = document.getElementById("send-btn");
+const inputEl = document.getElementById("input");
+const sendBtn = document.getElementById("send-btn");
 
-let mode = "";
+let mode          = "";
 let currentModule = "catch";
-let phase = 'pre';
+let phase         = "pre";
 
-function nowTime(){
-  const d = new Date();
-  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+// ── userId：ブラウザごとに固定（LocalStorage）────────────────
+let userId = localStorage.getItem("hiiro_userId");
+if (!userId) {
+  userId = "u_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+  localStorage.setItem("hiiro_userId", userId);
 }
 
-function lockInput(){
+// ── ユーティリティ ────────────────────────────────────────────
+function nowTime() {
+  const d = new Date();
+  return d.getHours().toString().padStart(2, "0") + ":" + d.getMinutes().toString().padStart(2, "0");
+}
+
+function lockInput() {
   inputEl.disabled = true;
   sendBtn.disabled = true;
 }
-function unlockInput(){
+function unlockInput() {
   inputEl.disabled = false;
   sendBtn.disabled = false;
   inputEl.focus();
 }
 
-// ボタン選択肢を表示
+function escapeHtml(str) {
+  return str
+    .replace(/&/g,  "&amp;")
+    .replace(/</g,  "&lt;")
+    .replace(/>/g,  "&gt;")
+    .replace(/"/g,  "&quot;")
+    .replace(/'/g,  "&#039;");
+}
+
+// ── 選択肢ボタン ──────────────────────────────────────────────
 function showExchangeButtons(buttons) {
   if (!buttons) return;
   const list = buttons.split(",").map(s => s.trim()).filter(Boolean);
@@ -294,22 +311,10 @@ function showExchangeButtons(buttons) {
   window.scrollTo(0, document.body.scrollHeight);
 }
 
-function selectMode(selected){
-  mode = selected;
-  document.getElementById("menu").style.display = "none";
-  phase = 'loop';
-  addUserBubble(selected);
-  setTimeout(() => {
-    addHiiroBubble(`そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`);
-    // catchフェーズの初期ボタン
-    showExchangeButtons("わからない,なんか違う,もやもや,疲れた,その他");
-    unlockInput();
-  }, 700);
-}
-
-function addUserBubble(text){
+// ── 吹き出し描画 ──────────────────────────────────────────────
+function addUserBubble(text) {
   const chat = document.getElementById("chat");
-  const row = document.createElement("div");
+  const row  = document.createElement("div");
   row.className = "bubble-row user-row fade";
   row.innerHTML = `<div class="bubble user">${escapeHtml(text)}</div>`;
   chat.appendChild(row);
@@ -320,9 +325,9 @@ function addUserBubble(text){
   window.scrollTo(0, document.body.scrollHeight);
 }
 
-function addHiiroBubble(text){
+function addHiiroBubble(text) {
   const chat = document.getElementById("chat");
-  const row = document.createElement("div");
+  const row  = document.createElement("div");
   row.className = "bubble-row hiiro-row fade";
   row.innerHTML = `
     <div class="icon-wrap">
@@ -338,29 +343,45 @@ function addHiiroBubble(text){
   window.scrollTo(0, document.body.scrollHeight);
 }
 
-async function send(){
-  if(phase === 'select') return;
+// ── モード選択 ────────────────────────────────────────────────
+function selectMode(selected) {
+  mode = selected;
+  document.getElementById("menu").style.display = "none";
+  phase = "loop";
+  addUserBubble(selected);
+  setTimeout(() => {
+    addHiiroBubble(`そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`);
+    showExchangeButtons("わからない,なんか違う,もやもや,疲れた,その他");
+    unlockInput();
+  }, 700);
+}
+
+// ── 送信エントリ ──────────────────────────────────────────────
+async function send() {
+  if (phase === "select") return;
   const text = inputEl.value.trim();
-  if(!text) return;
+  if (!text) return;
   inputEl.value = "";
   await sendMessage(text, "free");
 }
 
+// ── GAS通信（配管の中核）─────────────────────────────────────
 async function sendMessage(text, input_type) {
   document.querySelectorAll(".exchange-btns").forEach(el => el.remove());
 
   addUserBubble(text);
   lockInput();
 
-  if(phase === 'pre'){
-    phase = 'select';
+  // pre フェーズ：テキスト入力でメニューを出す
+  if (phase === "pre") {
+    phase = "select";
     setTimeout(() => {
       document.getElementById("menu").style.display = "grid";
     }, 800);
     return;
   }
 
-  // 即座に … を表示
+  // … 吹き出し（通信中：ひいろが言葉を受け止めている気配）
   const dotsRow = document.createElement("div");
   dotsRow.className = "bubble-row hiiro-row fade";
   dotsRow.innerHTML = `
@@ -375,22 +396,28 @@ async function sendMessage(text, input_type) {
   const controller = new AbortController();
   const timeoutId  = setTimeout(() => controller.abort(), GAS_TIMEOUT_MS);
 
-  try{
+  try {
     const res = await fetch(GAS_URL, {
-      method: "POST",
-      body: JSON.stringify({ mode, text, module: currentModule, input_type }),
-      signal: controller.signal
+      method : "POST",
+      body   : JSON.stringify({
+        userId,                        // ← LocalStorage から引き継ぐ識別子
+        module     : currentModule,    // GAS側で currentPhase として受け取る
+        text,
+        input_type
+      }),
+      signal : controller.signal
     });
     clearTimeout(timeoutId);
 
-    const data = await res.json();
+    const data    = await res.json();
     currentModule = data.next || currentModule;
 
-    // … を本文に差し替え
+    // … を消してひいろの言葉を流し込む
     dotsRow.remove();
     addHiiroBubble(data.output || "……");
 
-    if(data.next === "lp"){
+    if (data.next === "lp") {
+      // LPへのCTA（既存仕様どおり）
       setTimeout(() => {
         addHiiroBubble(
           `少し、そのまま一緒に見てみませんか。<br><a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">見てみる</a>`
@@ -401,7 +428,7 @@ async function sendMessage(text, input_type) {
       unlockInput();
     }
 
-  } catch(e) {
+  } catch (e) {
     clearTimeout(timeoutId);
     dotsRow.remove();
     addHiiroBubble("……");
@@ -409,25 +436,17 @@ async function sendMessage(text, input_type) {
   }
 }
 
-// ページ読み込み時にGASをウォームアップ
+// ── ウォームアップ（コールドスタート対策）────────────────────
 window.addEventListener("load", () => {
   fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({ text: "", module: "warmup", input_type: "warmup" })
+    method : "POST",
+    body   : JSON.stringify({ userId, text: "", module: "warmup", input_type: "warmup" })
   }).catch(() => {});
 });
 
-function escapeHtml(str){
-  return str.replace(/&/g,"&amp;")
-            .replace(/</g,"&lt;")
-            .replace(/>/g,"&gt;")
-            .replace(/"/g,"&quot;")
-            .replace(/'/g,"&#039;");
-}
-
-// Enterキー送信
+// ── Enterキー送信 ─────────────────────────────────────────────
 inputEl.addEventListener("keypress", (e) => {
-  if(e.key === "Enter" && !e.shiftKey && !inputEl.disabled){
+  if (e.key === "Enter" && !e.shiftKey && !inputEl.disabled) {
     e.preventDefault();
     send();
   }
