@@ -14,8 +14,6 @@ body {
   font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
   color: #4b403d;
   font-size: 14px;
-
-  /* 背景画像 */
   background: url("bg.png") no-repeat center center fixed;
   background-size: cover;
 }
@@ -25,18 +23,32 @@ body {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 4px 16px 140px;
+  padding: 12px 16px 140px;
 }
 
-/* アイコン＋名前 */
+/* 会話行 */
 .bubble-row {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.bubble-row.hiiro-row { justify-content: flex-start; }
-.bubble-row.user-row { justify-content: flex-end; }
+.bubble-row.hiiro-row {
+  justify-content: flex-start;
+}
+
+.bubble-row.user-row {
+  justify-content: flex-end;
+}
+
+/* アイコン縦 */
+.icon-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
 
 /* アイコン */
 .icon {
@@ -64,26 +76,19 @@ body {
   text-align: center;
 }
 
-/* アイコン縦構造 */
-.icon-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 4px;
-}
-
 /* 吹き出し */
 .bubble {
   max-width: 75%;
-  padding: 8px 12px;
+  padding: 5px 12px 7px;
   border-radius: 18px;
-  line-height: 1.7;
+  line-height: 1.45;
   font-size: 14px;
   white-space: pre-line;
+  word-break: break-word;
 }
 
 .hiiro {
-  background: #ffffff;
+  background: rgba(255,255,255,0.96);
   border-bottom-left-radius: 6px;
 }
 
@@ -94,9 +99,9 @@ body {
 
 /* 時間 */
 .time {
-  font-size: 11px;
-  opacity: 0.4;
-  margin-bottom: 10px;
+  font-size: 10px;
+  opacity: 0.45;
+  margin-bottom: 14px;
 }
 
 .time.right {
@@ -109,7 +114,9 @@ body {
   grid-template-columns: repeat(2, auto);
   justify-content: flex-start;
   gap: 10px;
-  margin: 36px 0 56px;
+
+  /* ←ここ重要：吹き出しと距離を取る */
+  margin: 18px 0 40px 42px;
 }
 
 .menu div {
@@ -117,13 +124,13 @@ body {
   border-radius: 999px;
   padding: 6px 10px;
   font-size: 11px;
-  background: #fffdfc;
+  background: rgba(255,255,255,0.92);
   cursor: pointer;
-  transition: 0.25s;
+  transition: 0.2s;
 }
 
 .menu div:hover {
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 /* 入力 */
@@ -138,7 +145,7 @@ body {
 .input-inner {
   max-width: 600px;
   margin: 0 auto;
-  background: white;
+  background: rgba(255,255,255,0.96);
   border-radius: 999px;
   padding: 10px 14px;
   display: flex;
@@ -153,8 +160,9 @@ textarea {
   resize: none;
   background: transparent;
   font-size: 14px;
-  line-height: 1.8;
+  line-height: 1.5;
   height: 24px;
+  font-family: inherit;
 }
 
 button {
@@ -169,16 +177,23 @@ button {
 
 /* アニメ */
 .fade {
-  animation: fade 1s ease;
+  animation: fade 0.7s ease;
 }
 
 @keyframes fade {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.spacer { height: 100px; }
-
+.spacer {
+  height: 100px;
+}
 </style>
 </head>
 
@@ -186,8 +201,9 @@ button {
 
 <div id="app">
 
-  <!-- ひいろ初期 -->
+  <!-- 初期ひいろ -->
   <div class="bubble-row hiiro-row fade">
+
     <div class="icon-wrap">
       <div class="icon">
         <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
@@ -196,9 +212,10 @@ button {
     </div>
 
     <div class="bubble hiiro">
-こんにちは  
+こんにちは
 どんなお話しましょうか
     </div>
+
   </div>
 
   <!-- メニュー -->
@@ -212,6 +229,7 @@ button {
   </div>
 
   <div id="chat"></div>
+
   <div class="spacer"></div>
 
 </div>
@@ -219,86 +237,117 @@ button {
 <!-- 入力 -->
 <div class="input-wrap">
   <div class="input-inner">
+
     <textarea id="input" placeholder="..."></textarea>
+
     <button id="send-btn" onclick="send()">➤</button>
+
   </div>
 </div>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbymH7fuEgaBSsRJTAn9kieFPg3OwMurZQrJF-TB2TH7GUlLfxT__N8e1AnT0-gzq1F85w/exec";
+
 const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
+
 const GAS_TIMEOUT_MS = 15000;
 
-const inputEl  = document.getElementById("input");
-const sendBtn  = document.getElementById("send-btn");
+const inputEl = document.getElementById("input");
+const sendBtn = document.getElementById("send-btn");
 
 let mode = "";
-let phase = 'pre';
+let phase = "pre";
 
-function nowTime(){
+function nowTime() {
   const d = new Date();
-  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+
+  return d.getHours().toString().padStart(2,"0")
+  + ":" +
+  d.getMinutes().toString().padStart(2,"0");
 }
 
-function lockInput(){
+function lockInput() {
   inputEl.disabled = true;
   sendBtn.disabled = true;
 }
 
-function unlockInput(){
+function unlockInput() {
   inputEl.disabled = false;
   sendBtn.disabled = false;
   inputEl.focus();
 }
 
 function selectMode(selected){
+
   mode = selected;
+
   document.getElementById("menu").style.display = "none";
-  phase = 'loop';
+
+  phase = "loop";
 
   addUserBubble(selected);
 
   setTimeout(() => {
-    addHiiroBubble(`そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`);
+
+    addHiiroBubble(
+      `そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`
+    );
+
     unlockInput();
-  }, 700);
+
+  },700);
 }
 
 function addUserBubble(text){
+
   const chat = document.getElementById("chat");
 
   chat.innerHTML += `
     <div class="bubble-row user-row fade">
       <div class="bubble user">${escapeHtml(text)}</div>
     </div>
-    <div class="time right">${nowTime()}</div>`;
 
-  window.scrollTo(0, document.body.scrollHeight);
+    <div class="time right">${nowTime()}</div>
+  `;
+
+  scrollBottom();
 }
 
 function addHiiroBubble(text){
+
   const chat = document.getElementById("chat");
 
   chat.innerHTML += `
     <div class="bubble-row hiiro-row fade">
+
       <div class="icon-wrap">
         <div class="icon">
           <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
         </div>
+
         <div class="name">ひいろ</div>
       </div>
 
       <div class="bubble hiiro">${text}</div>
+
     </div>
 
-    <div class="time">${nowTime()}</div>`;
+    <div class="time">${nowTime()}</div>
+  `;
 
-  window.scrollTo(0, document.body.scrollHeight);
+  scrollBottom();
+}
+
+function scrollBottom(){
+  window.scrollTo({
+    top: document.body.scrollHeight,
+    behavior: "smooth"
+  });
 }
 
 async function send(){
 
-  if(phase === 'select') return;
+  if(phase === "select") return;
 
   const text = inputEl.value.trim();
 
@@ -310,9 +359,9 @@ async function send(){
 
   lockInput();
 
-  if(phase === 'pre'){
+  if(phase === "pre"){
 
-    phase = 'select';
+    phase = "select";
 
     setTimeout(() => {
 
@@ -320,21 +369,22 @@ async function send(){
 
       document.getElementById("menu").style.display = "grid";
 
-    }, 800);
+    },800);
 
     return;
   }
 
   const controller = new AbortController();
 
-  const timeoutId = setTimeout(() => controller.abort(), GAS_TIMEOUT_MS);
+  const timeoutId =
+    setTimeout(() => controller.abort(), GAS_TIMEOUT_MS);
 
-  try{
+  try {
 
     const res = await fetch(GAS_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type":"application/json"
       },
       body: JSON.stringify({ mode, text }),
       signal: controller.signal
@@ -360,7 +410,7 @@ async function send(){
             </a>`
           );
 
-        }, 1500);
+        },1500);
 
       } else {
 
@@ -368,9 +418,9 @@ async function send(){
 
       }
 
-    }, 1200);
+    },1200);
 
-  } catch(e) {
+  } catch(e){
 
     clearTimeout(timeoutId);
 
@@ -380,11 +430,12 @@ async function send(){
 
       unlockInput();
 
-    }, 1200);
+    },1200);
   }
 }
 
 function escapeHtml(str){
+
   return str.replace(/&/g,"&amp;")
             .replace(/</g,"&lt;")
             .replace(/>/g,"&gt;")
@@ -392,9 +443,13 @@ function escapeHtml(str){
             .replace(/'/g,"&#039;");
 }
 
-inputEl.addEventListener("keypress", (e) => {
+inputEl.addEventListener("keypress",(e)=>{
 
-  if(e.key === "Enter" && !e.shiftKey && !inputEl.disabled){
+  if(
+    e.key === "Enter"
+    && !e.shiftKey
+    && !inputEl.disabled
+  ){
 
     e.preventDefault();
 
