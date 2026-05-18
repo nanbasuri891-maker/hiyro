@@ -14,49 +14,61 @@ body {
   font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
   color: #4b403d;
   font-size: 14px;
-  /* 背景画像 */
+  /* 背景画像を画面全体に美しく固定 */
   background: url("bg.png") no-repeat center center fixed;
   background-size: cover;
+  background-color: #fcf9f7; /* 画像がない場合のフォールバック */
 }
 
-/* 全体 */
+/* 全体コンテナ */
 #app {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
   padding: 24px 16px 140px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* アイコン＋名前＋吹き出しのコンテナ */
+/* タイムライン（メッセージとメニューが正しい順序で並ぶ場所） */
+#chat-timeline {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* 行全体の構造 */
 .bubble-row {
   display: flex;
-  align-items: flex-end;
-  margin-bottom: 6px;
+  align-items: flex-start; /* 上揃えにしてLINEらしさを強調 */
+  margin-bottom: 4px;
   width: 100%;
 }
 
 .bubble-row.hiiro-row { justify-content: flex-start; }
 .bubble-row.user-row { justify-content: flex-end; }
 
-/* アイコン縦構造 */
+/* アイコンと名前 */
 .icon-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-right: 8px;
+  margin-right: 10px;
   flex-shrink: 0;
 }
 
-/* アイコン */
 .icon {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #efe6e2;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  font-size: 14px;
+  font-weight: bold;
+  color: #9b8480;
 }
 
 .icon img {
@@ -65,69 +77,72 @@ body {
   object-fit: cover;
 }
 
-/* 名前 */
 .name {
-  font-size: 11px;
+  font-size: 10px;
   color: #9b8480;
   margin-top: 4px;
   text-align: center;
 }
 
-/* 吹き出し */
+/* 吹き出しの横幅修正（width: fit-contentがポイントです） */
 .bubble {
-  max-width: 75%;
-  padding: 10px 14px;
+  max-width: 70%;
+  width: fit-content;
+  padding: 10px 16px;
   border-radius: 18px;
-  line-height: 1.8;
+  line-height: 1.6;
   font-size: 14px;
   white-space: pre-line;
+  word-break: break-all;
 }
 
 .hiiro {
   background: #f4eaea;
-  border-bottom-left-radius: 6px;
+  border-top-left-radius: 4px; /* LINE風の角丸制御 */
 }
 
 .user {
   background: #ece7e2;
-  border-bottom-right-radius: 6px;
+  border-top-right-radius: 4px;
 }
 
-/* 時間 */
+/* 時間表示 */
 .time {
-  font-size: 11px;
-  opacity: 0.4;
-  margin-bottom: 20px;
+  font-size: 10px;
+  opacity: 0.5;
+  margin-bottom: 16px;
+  color: #9b8480;
 }
+.hiiro-row + .time { margin-left: 50px; text-align: left; } /* アイコンの幅に合わせて調整 */
+.user-row + .time { text-align: right; }
 
-.time.right {
-  text-align: right;
-}
-
-/* メニュー */
+/* メニュー（チャットのタイムライン内に自然に差し込まれる） */
 .menu {
   display: grid;
-  grid-template-columns: repeat(2, auto);
-  justify-content: flex-start;
-  gap: 10px;
-  margin: 36px 0 56px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 280px; /* 横に広がりすぎないサイズ */
+  margin: 12px 0 20px 50px; /* ひいろのアイコン幅に合わせる */
 }
 
 .menu div {
   border: 1px solid #d9c8c2;
   border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 11px;
-  background: #fffdfc;
+  padding: 8px 12px;
+  font-size: 12px;
+  background: rgba(255, 253, 252, 0.9);
+  text-align: center;
   cursor: pointer;
-  transition: 0.25s;
+  transition: background 0.2s, opacity 0.2s;
+  color: #4b403d;
 }
 
 .menu div:hover {
-  opacity: 0.7;
+  background: #efe6e2;
 }
 
-/* 入力固定エリア */
+/* 入力エリア固定 */
 .input-wrap {
   position: fixed;
   bottom: 20px;
@@ -140,12 +155,13 @@ body {
 .input-inner {
   max-width: 600px;
   margin: 0 auto;
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
   border-radius: 999px;
-  padding: 10px 14px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 20px rgba(75, 64, 61, 0.1);
 }
 
 textarea {
@@ -155,71 +171,67 @@ textarea {
   resize: none;
   background: transparent;
   font-size: 14px;
-  line-height: 1.8;
-  height: 24px;
+  line-height: 1.5;
+  height: 22px;
+  color: #4b403d;
 }
 
 button {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border: none;
-  border-radius: 999px;
+  border-radius: 50%;
   background: #e7c8c1;
   color: white;
   cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
 }
 
-/* アニメーション */
+button:hover { opacity: 0.9; }
+
+/* フェードインアニメーション */
 .fade {
-  animation: fade 1s ease forwards;
+  animation: fade 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes fade {
-  from { opacity: 0; transform: translateY(5px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.spacer { height: 100px; }
+.spacer { height: 60px; }
 </style>
 </head>
 
 <body>
 
 <div id="app">
-
-  <!-- ひいろ初期状態 -->
-  <div class="bubble-row hiiro-row fade">
-    <div class="icon-wrap">
-      <div class="icon">
-        <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
+  <div id="chat-timeline">
+    
+    <div class="bubble-row hiiro-row fade">
+      <div class="icon-wrap">
+        <div class="icon">
+          <img src="hiiro.png" onerror="this.style.display='none'; this.parentNode.innerText='ひ'">
+        </div>
+        <div class="name">ひいろ</div>
       </div>
-      <div class="name">ひいろ</div>
-    </div>
-    <div class="bubble hiiro">こんにちは  
+      <div class="bubble hiiro">こんにちは  
 どんなお話しましょうか</div>
-  </div>
-  <div class="time">00:00</div> <!-- 初期化時にスクリプトで現在時刻を上書き可能 -->
+    </div>
+    <div class="time">00:00</div>
 
-  <div id="chat"></div>
-
-  <!-- メニュー（初期非表示） -->
-  <div class="menu" id="menu" style="display:none;">
-    <div onclick="selectMode('仕事')">仕事</div>
-    <div onclick="selectMode('恋愛')">恋愛</div>
-    <div onclick="selectMode('人間関係')">人間関係</div>
-    <div onclick="selectMode('その他')">その他</div>
-    <div onclick="selectMode('イベント')">イベント</div>
-    <div onclick="selectMode('雑談')">雑談</div>
   </div>
 
   <div class="spacer"></div>
-
 </div>
 
-<!-- 入力固定エリア -->
 <div class="input-wrap">
   <div class="input-inner">
-    <textarea id="input" placeholder="..."></textarea>
+    <textarea id="input" placeholder="メッセージを入力..."></textarea>
     <button onclick="send()">➤</button>
   </div>
 </div>
@@ -231,7 +243,7 @@ const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
 let mode = "";
 let firstInputDone = false;
 
-// 初期メッセージの時刻を現在時刻に設定
+// 初回メッセージの時刻を設定
 document.querySelector('.time').innerText = nowTime();
 
 function nowTime(){
@@ -241,40 +253,59 @@ function nowTime(){
 
 function selectMode(selected){
   mode = selected;
-  document.getElementById("menu").style.display = "none";
+  
+  // 選択されたらメニューをタイムラインから削除（または非表示）
+  const menu = document.getElementById("menu");
+  if(menu) menu.remove(); 
+
   addUserBubble(selected);
   
-  // モード選択後の応答。ここから自然に会話が繋がるように誘導
   setTimeout(() => {
     addHiiroBubble(`…${selected}なんですね。`);
   }, 700);
 }
 
 function addUserBubble(text){
-  const chat = document.getElementById("chat");
-  chat.innerHTML += `
+  const timeline = document.getElementById("chat-timeline");
+  timeline.insertAdjacentHTML('beforeend', `
     <div class="bubble-row user-row fade">
       <div class="bubble user">${escapeHtml(text)}</div>
     </div>
     <div class="time right">${nowTime()}</div>
-  `;
+  `);
   scrollToBottom();
 }
 
 function addHiiroBubble(text){
-  const chat = document.getElementById("chat");
-  chat.innerHTML += `
+  const timeline = document.getElementById("chat-timeline");
+  timeline.insertAdjacentHTML('beforeend', `
     <div class="bubble-row hiiro-row fade">
       <div class="icon-wrap">
         <div class="icon">
-          <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
+          <img src="hiiro.png" onerror="this.style.display='none'; this.parentNode.innerText='ひ'">
         </div>
         <div class="name">ひいろ</div>
       </div>
       <div class="bubble hiiro">${text}</div>
     </div>
     <div class="time">${nowTime()}</div>
-  `;
+  `);
+  scrollToBottom();
+}
+
+// メニューを動的にタイムラインの「最下部」に追加する関数
+function addMenuElement(){
+  const timeline = document.getElementById("chat-timeline");
+  timeline.insertAdjacentHTML('beforeend', `
+    <div class="menu fade" id="menu">
+      <div onclick="selectMode('仕事')">仕事</div>
+      <div onclick="selectMode('恋愛')">恋愛</div>
+      <div onclick="selectMode('人間関係')">人間関係</div>
+      <div onclick="selectMode('その他')">その他</div>
+      <div onclick="selectMode('イベント')">イベント</div>
+      <div onclick="selectMode('雑談')">雑談</div>
+    </div>
+  `);
   scrollToBottom();
 }
 
@@ -290,20 +321,21 @@ async function send(){
   addUserBubble(text);
   input.value = "";
 
-  // 【修正】初回入力時は関係性を立ち上げるトリガーとし、GASへは送信しない（衝突回避）
+  // 初回入力時はトリガーUIの起動のみ（GASへは送らない）
   if(!firstInputDone){
     firstInputDone = true;
     setTimeout(() => {
       addHiiroBubble("ありがとうございます。今日は何はなす？");
-      document.getElementById("menu").style.display = "grid";
-      scrollToBottom();
+      // 応答のあとにメニューを正しく「下に」出す
+      setTimeout(() => {
+        addMenuElement();
+      }, 400);
     }, 800);
     return; 
   }
 
-  // 2回目以降の入力はGASへ送信
+  // 2回目以降の通常の会話データフロー
   try{
-    // 【修正】CORSプレフライトを回避するため text/plain で送信
     const res = await fetch(GAS_URL, {
       method: "POST",
       headers: {
@@ -330,7 +362,6 @@ async function send(){
     }, 1200);
 
   } catch(e) {
-    // 通信エラー時も静かに受け取る
     setTimeout(() => addHiiroBubble("……"), 1200);
   }
 }
