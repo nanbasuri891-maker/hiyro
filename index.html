@@ -125,12 +125,132 @@ body {
   padding: 6px 10px;
   font-size: 11px;
   background: rgba(255,255,255,0.92);
+  cursor: pointer;<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ひいろ</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+  color: #4b403d;
+  font-size: 14px;
+
+  /* 背景画像 */
+  background: url("bg.png") no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* 全体 */
+#app {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 4px 16px 140px;
+}
+
+/* アイコン＋名前 */
+.bubble-row {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 6px;
+}
+
+.bubble-row.hiiro-row { justify-content: flex-start; }
+.bubble-row.user-row { justify-content: flex-end; }
+
+/* アイコン */
+.icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #efe6e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 名前 */
+.name {
+  font-size: 11px;
+  color: #9b8480;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* アイコン縦構造 */
+.icon-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 8px;
+}
+
+/* 吹き出し */
+.bubble {
+  max-width: 75%;
+  padding: 8px 12px;
+  border-radius: 18px;
+  line-height: 1.6;
+  font-size: 14px;
+  white-space: pre-line;
+}
+
+.hiiro {
+  background: #ffffff;
+  border-bottom-left-radius: 6px;
+}
+
+.user {
+  background: #ece7e2;
+  border-bottom-right-radius: 6px;
+}
+
+/* 時間 */
+.time {
+  font-size: 11px;
+  opacity: 0.4;
+  margin-bottom: 10px;
+}
+
+.time.right {
+  text-align: right;
+}
+
+/* メニュー */
+.menu {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 36px 0 56px;
+}
+
+.menu div {
+  border: 1px solid #d9c8c2;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  background: #fffdfc;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.25s;
 }
 
 .menu div:hover {
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
 /* 入力 */
@@ -145,7 +265,7 @@ body {
 .input-inner {
   max-width: 600px;
   margin: 0 auto;
-  background: rgba(255,255,255,0.96);
+  background: white;
   border-radius: 999px;
   padding: 10px 14px;
   display: flex;
@@ -160,9 +280,8 @@ textarea {
   resize: none;
   background: transparent;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.8;
   height: 24px;
-  font-family: inherit;
 }
 
 button {
@@ -177,23 +296,16 @@ button {
 
 /* アニメ */
 .fade {
-  animation: fade 0.7s ease;
+  animation: fade 1s ease;
 }
 
 @keyframes fade {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.spacer {
-  height: 100px;
-}
+.spacer { height: 100px; }
+
 </style>
 </head>
 
@@ -201,9 +313,8 @@ button {
 
 <div id="app">
 
-  <!-- 初期ひいろ -->
+  <!-- ひいろ初期 -->
   <div class="bubble-row hiiro-row fade">
-
     <div class="icon-wrap">
       <div class="icon">
         <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
@@ -212,10 +323,9 @@ button {
     </div>
 
     <div class="bubble hiiro">
-こんにちは
+こんにちは  
 どんなお話しましょうか
     </div>
-
   </div>
 
   <!-- メニュー -->
@@ -229,7 +339,6 @@ button {
   </div>
 
   <div id="chat"></div>
-
   <div class="spacer"></div>
 
 </div>
@@ -237,205 +346,137 @@ button {
 <!-- 入力 -->
 <div class="input-wrap">
   <div class="input-inner">
-
     <textarea id="input" placeholder="..."></textarea>
-
     <button id="send-btn" onclick="send()">➤</button>
-
   </div>
 </div>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbymH7fuEgaBSsRJTAn9kieFPg3OwMurZQrJF-TB2TH7GUlLfxT__N8e1AnT0-gzq1F85w/exec";
-
 const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
-
 const GAS_TIMEOUT_MS = 15000;
 
-const inputEl = document.getElementById("input");
-const sendBtn = document.getElementById("send-btn");
+const inputEl  = document.getElementById("input");
+const sendBtn  = document.getElementById("send-btn");
 
 let mode = "";
-let phase = "pre";
+let currentModule = "catch"; // フェーズ管理
 
-function nowTime() {
+// [修正1] フェーズ管理: 'pre' | 'select' | 'loop'
+let phase = 'pre';
+
+function nowTime(){
   const d = new Date();
-
-  return d.getHours().toString().padStart(2,"0")
-  + ":" +
-  d.getMinutes().toString().padStart(2,"0");
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
 }
 
-function lockInput() {
+// [修正2] 入力制御ヘルパー
+function lockInput(){
   inputEl.disabled = true;
   sendBtn.disabled = true;
 }
-
-function unlockInput() {
+function unlockInput(){
   inputEl.disabled = false;
   sendBtn.disabled = false;
   inputEl.focus();
 }
 
 function selectMode(selected){
-
   mode = selected;
-
   document.getElementById("menu").style.display = "none";
-
-  phase = "loop";
-
+  phase = 'loop';
   addUserBubble(selected);
-
   setTimeout(() => {
-
-    addHiiroBubble(
-      `そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`
-    );
-
+    addHiiroBubble(`そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`);
     unlockInput();
-
-  },700);
+  }, 700);
 }
 
 function addUserBubble(text){
-
   const chat = document.getElementById("chat");
-
   chat.innerHTML += `
     <div class="bubble-row user-row fade">
       <div class="bubble user">${escapeHtml(text)}</div>
     </div>
-
-    <div class="time right">${nowTime()}</div>
-  `;
-
-  scrollBottom();
+    <div class="time right">${nowTime()}</div>`;
+  window.scrollTo(0, document.body.scrollHeight);
 }
 
 function addHiiroBubble(text){
-
   const chat = document.getElementById("chat");
-
   chat.innerHTML += `
     <div class="bubble-row hiiro-row fade">
-
       <div class="icon-wrap">
-        <div class="icon">
-          <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
-        </div>
-
+        <div class="icon"><img src="hiiro.png" onerror="this.parentNode.innerText='ひ'"></div>
         <div class="name">ひいろ</div>
       </div>
-
       <div class="bubble hiiro">${text}</div>
-
     </div>
-
-    <div class="time">${nowTime()}</div>
-  `;
-
-  scrollBottom();
-}
-
-function scrollBottom(){
-  window.scrollTo({
-    top: document.body.scrollHeight,
-    behavior: "smooth"
-  });
+    <div class="time">${nowTime()}</div>`;
+  window.scrollTo(0, document.body.scrollHeight);
 }
 
 async function send(){
-
-  if(phase === "select") return;
+  // [修正1] ボタン選択待ち中は何もしない
+  if(phase === 'select') return;
 
   const text = inputEl.value.trim();
-
   if(!text) return;
 
   addUserBubble(text);
-
   inputEl.value = "";
+  lockInput(); // [修正2] 送信中は封鎖
 
-  lockInput();
-
-  if(phase === "pre"){
-
-    phase = "select";
-
+  if(phase === 'pre'){
+    phase = 'select';
     setTimeout(() => {
-
-      addHiiroBubble("ありがとう。今日は何はなす？");
-
       document.getElementById("menu").style.display = "grid";
-
-    },800);
-
+    }, 800);
     return;
   }
 
+  // phase === 'loop': GASと通信
+  // [修正3] タイムアウト処理
   const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GAS_TIMEOUT_MS);
 
-  const timeoutId =
-    setTimeout(() => controller.abort(), GAS_TIMEOUT_MS);
-
-  try {
-
+  try{
     const res = await fetch(GAS_URL, {
       method: "POST",
-      headers: {
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({ mode, text }),
+      body: JSON.stringify({ mode, text, module: currentModule }),
       signal: controller.signal
     });
-
     clearTimeout(timeoutId);
 
     const data = await res.json();
+    currentModule = data.next || currentModule; // フェーズを更新
 
     setTimeout(() => {
-
       addHiiroBubble(data.output || "……");
 
       if(data.next === "lp"){
-
         setTimeout(() => {
-
           addHiiroBubble(
-            `少し、そのまま一緒に見てみませんか。<br>
-            <a href="${LP_URL}" target="_blank"
-            style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">
-            見てみる
-            </a>`
+            `少し、そのまま一緒に見てみませんか。<br><a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">見てみる</a>`
           );
-
-        },1500);
-
+          // 終端なので unlockInput しない
+        }, 1500);
       } else {
-
-        unlockInput();
-
+        unlockInput(); // [修正2] 通常応答後に開放
       }
+    }, 1200);
 
-    },1200);
-
-  } catch(e){
-
+  } catch(e) {
     clearTimeout(timeoutId);
-
+    // タイムアウト・通信エラーともに "……" でホールド
     setTimeout(() => {
-
       addHiiroBubble("……");
-
-      unlockInput();
-
-    },1200);
+      unlockInput(); // [修正2] エラー後も開放して続行可能に
+    }, 1200);
   }
 }
 
 function escapeHtml(str){
-
   return str.replace(/&/g,"&amp;")
             .replace(/</g,"&lt;")
             .replace(/>/g,"&gt;")
@@ -443,16 +484,10 @@ function escapeHtml(str){
             .replace(/'/g,"&#039;");
 }
 
-inputEl.addEventListener("keypress",(e)=>{
-
-  if(
-    e.key === "Enter"
-    && !e.shiftKey
-    && !inputEl.disabled
-  ){
-
+// Enterキー送信
+inputEl.addEventListener("keypress", (e) => {
+  if(e.key === "Enter" && !e.shiftKey && !inputEl.disabled){
     e.preventDefault();
-
     send();
   }
 });
