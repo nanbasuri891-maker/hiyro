@@ -115,24 +115,26 @@
 <div id="chat-container">
   <div id="chat-log"></div>
   <div id="input-container">
-    <input type="text" id="user-input" placeholder="…" disabled>
-    <button id="send-btn" onclick="handleSend()" disabled>➔</button>
+    <input type="text" id="user-input" placeholder="…" autocomplete="off">
+    <button id="send-btn" onclick="handleSend()">➔</button>
   </div>
 </div>
 
 <script>
-  // あなたのGAS WebアプリURL
   const GAS_URL = "https://script.google.com/macros/s/AKfycbymH7fuEgaBSsRJTAn9kieFPg3OwMurZQrJF-TB2TH7GUlLfxT__N8e1AnT0-gzq1F85w/exec"; 
-
-  // ご提示いただいたLPのURL
   const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
 
   const chatLog = document.getElementById("chat-log");
   const userInput = document.getElementById("user-input");
   const sendBtn = document.getElementById("send-btn");
 
+  // 初回入力か、その後の交換ループかを識別するフラグ
+  let isFirstInput = true;
+
   window.onload = () => {
-    initPreHiiro();
+    // 始まりは静かに問いかけるのみ（ボタンは出さない）
+    addBubble("system", "ひいろです。今日はどんなお話しましょう？");
+    userInput.focus();
   };
 
   function addBubble(sender, text) {
@@ -143,10 +145,30 @@
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  // ① プレひいろ（安定化の地面）
-  function initPreHiiro() {
-    addBubble("system", "ひいろです。今日はどんなお話しましょう？");
-    
+  // メインの送信管理
+  async function handleSend() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    userInput.value = "";
+    userInput.disabled = true;
+    sendBtn.disabled = true;
+
+    addBubble("user", text);
+
+    if (isFirstInput) {
+      // 1回目の入力があったので、候補ボタン（プレひいろ層）を展開
+      setTimeout(() => {
+        showPreHiiroOptions();
+      }, 600);
+    } else {
+      // 2回目以降は、スプシ（GAS）との純粋な交換ループ
+      await exchangeWithGas(text);
+    }
+  }
+
+  // ① ユーザーの最初の一言の「後」にボタンを出す
+  function showPreHiiroOptions() {
     const optionsContainer = document.createElement("div");
     optionsContainer.className = "options-container";
     
@@ -163,11 +185,13 @@
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
+  // ボタンが選ばれたら、そこから交換ループのフェーズへ移行
   function selectPreHiiro(choice) {
     const containers = document.getElementsByClassName("options-container");
     if(containers.length > 0) containers[containers.length - 1].style.display = "none";
     
     addBubble("user", choice);
+    isFirstInput = false; // 初回フラグをオフにする
     
     setTimeout(() => {
       addBubble("system", `そっか<br>${choice}の中で、今ちょっと気になってる感じってありますか`);
@@ -177,17 +201,8 @@
     }, 600);
   }
 
-  // ② ひいろ本体（交換ループ）
-  async function handleSend() {
-    const text = userInput.value.trim();
-    if (!text) return;
-
-    userInput.value = "";
-    userInput.disabled = true;
-    sendBtn.disabled = true;
-
-    addBubble("user", text);
-
+  // ② ひいろ本体（GAS通信）
+  async function exchangeWithGas(text) {
     const dotsBubble = document.createElement("div");
     dotsBubble.className = "bubble system";
     dotsBubble.innerText = "…";
@@ -207,7 +222,6 @@
       dotsBubble.remove();
       addBubble("system", data.output);
 
-      // ③ 外部保持への移送判定
       if (data.next === "lp") {
         showCTA();
       } else {
