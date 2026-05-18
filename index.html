@@ -96,7 +96,7 @@ body {
 .time {
   font-size: 11px;
   opacity: 0.4;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .time.right {
@@ -266,13 +266,25 @@ function selectMode(selected){
 
 function addUserBubble(text){
   const chat = document.getElementById("chat");
-  chat.innerHTML += `<div class="bubble user fade">${escapeHtml(text)}</div><div class="time right">${nowTime()}</div>`;
+  chat.innerHTML += `
+    <div class="bubble-row user-row fade">
+      <div class="bubble user">${escapeHtml(text)}</div>
+    </div>
+    <div class="time right">${nowTime()}</div>`;
+  window.scrollTo(0, document.body.scrollHeight);
 }
 
 function addHiiroBubble(text){
   const chat = document.getElementById("chat");
-  chat.innerHTML += `<div class="bubble hiiro fade">${text}</div><div class="time">${nowTime()}</div>`;
-  // 末尾へスクロール
+  chat.innerHTML += `
+    <div class="bubble-row hiiro-row fade">
+      <div class="icon-wrap">
+        <div class="icon"><img src="hiiro.png" onerror="this.parentNode.innerText='ひ'"></div>
+        <div class="name">ひいろ</div>
+      </div>
+      <div class="bubble hiiro">${text}</div>
+    </div>
+    <div class="time">${nowTime()}</div>`;
   window.scrollTo(0, document.body.scrollHeight);
 }
 
