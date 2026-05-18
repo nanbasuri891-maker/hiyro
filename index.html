@@ -302,7 +302,7 @@ async function send(){
   if(phase === 'pre'){
     phase = 'select'; // [修正1] 即座にフェーズ変更
     setTimeout(() => {
-      addHiiroBubble("ありがとうございます。今日は何はなす？");
+      addHiiroBubble("そっか。");
       document.getElementById("menu").style.display = "grid";
       // ボタン選択待ちなのでここでは unlockInput しない
     }, 800);
