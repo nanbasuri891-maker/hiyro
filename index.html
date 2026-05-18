@@ -179,6 +179,26 @@ button {
 
 .spacer { height: 100px; }
 
+/* 交換ボタン */
+.exchange-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 8px 52px;
+}
+.exchange-btn {
+  border: 1px solid #d9c8c2;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  background: #fffdfc;
+  color: #4b403d;
+  cursor: pointer;
+  transition: 0.2s;
+  font-family: inherit;
+}
+.exchange-btn:hover { opacity: 0.7; }
+
 </style>
 </head>
 
@@ -223,7 +243,7 @@ button {
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzqRGOHYFzL2ebU9lYSSzQnrVyO8uout0g2a7Gk_aEu2dq4bu3I-2x8LDcE5-TEBuE-fQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbznqcOFWAzTpEUjUbAxLL2pHaADEv9mEBIWfaJhgHPRyjMKgUyqqx0SkKku9Ljb5Vzf/exec";
 const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
 const GAS_TIMEOUT_MS = 15000;
 
@@ -231,9 +251,7 @@ const inputEl  = document.getElementById("input");
 const sendBtn  = document.getElementById("send-btn");
 
 let mode = "";
-let currentModule = "catch"; // フェーズ管理
-
-// [修正1] フェーズ管理: 'pre' | 'select' | 'loop'
+let currentModule = "catch";
 let phase = 'pre';
 
 function nowTime(){
@@ -241,7 +259,6 @@ function nowTime(){
   return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
 }
 
-// [修正2] 入力制御ヘルパー
 function lockInput(){
   inputEl.disabled = true;
   sendBtn.disabled = true;
@@ -252,6 +269,30 @@ function unlockInput(){
   inputEl.focus();
 }
 
+// ボタン選択肢を表示
+function showExchangeButtons(buttons) {
+  if (!buttons) return;
+  const list = buttons.split(",").map(s => s.trim()).filter(Boolean);
+  if (!list.length) return;
+
+  const wrap = document.createElement("div");
+  wrap.className = "exchange-btns";
+
+  list.forEach(label => {
+    const btn = document.createElement("button");
+    btn.className = "exchange-btn";
+    btn.innerText = label;
+    btn.onclick = () => {
+      wrap.remove();
+      sendMessage(label, "button");
+    };
+    wrap.appendChild(btn);
+  });
+
+  document.getElementById("chat").appendChild(wrap);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
 function selectMode(selected){
   mode = selected;
   document.getElementById("menu").style.display = "none";
@@ -259,6 +300,8 @@ function selectMode(selected){
   addUserBubble(selected);
   setTimeout(() => {
     addHiiroBubble(`そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`);
+    // catchフェーズの初期ボタン
+    showExchangeButtons("わからない,なんか違う,もやもや,疲れた");
     unlockInput();
   }, 700);
 }
@@ -288,15 +331,19 @@ function addHiiroBubble(text){
 }
 
 async function send(){
-  // [修正1] ボタン選択待ち中は何もしない
   if(phase === 'select') return;
-
   const text = inputEl.value.trim();
   if(!text) return;
+  inputEl.value = "";
+  await sendMessage(text, "free");
+}
+
+async function sendMessage(text, input_type) {
+  // 既存のボタンを消す
+  document.querySelectorAll(".exchange-btns").forEach(el => el.remove());
 
   addUserBubble(text);
-  inputEl.value = "";
-  lockInput(); // [修正2] 送信中は封鎖
+  lockInput();
 
   if(phase === 'pre'){
     phase = 'select';
@@ -306,21 +353,19 @@ async function send(){
     return;
   }
 
-  // phase === 'loop': GASと通信
-  // [修正3] タイムアウト処理
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), GAS_TIMEOUT_MS);
+  const timeoutId  = setTimeout(() => controller.abort(), GAS_TIMEOUT_MS);
 
   try{
     const res = await fetch(GAS_URL, {
       method: "POST",
-      body: JSON.stringify({ mode, text, module: currentModule }),
+      body: JSON.stringify({ mode, text, module: currentModule, input_type }),
       signal: controller.signal
     });
     clearTimeout(timeoutId);
 
     const data = await res.json();
-    currentModule = data.next || currentModule; // フェーズを更新
+    currentModule = data.next || currentModule;
 
     setTimeout(() => {
       addHiiroBubble(data.output || "……");
@@ -330,19 +375,18 @@ async function send(){
           addHiiroBubble(
             `少し、そのまま一緒に見てみませんか。<br><a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">見てみる</a>`
           );
-          // 終端なので unlockInput しない
         }, 1500);
       } else {
-        unlockInput(); // [修正2] 通常応答後に開放
+        showExchangeButtons(data.buttons);
+        unlockInput();
       }
     }, 1200);
 
   } catch(e) {
     clearTimeout(timeoutId);
-    // タイムアウト・通信エラーともに "……" でホールド
     setTimeout(() => {
       addHiiroBubble("……");
-      unlockInput(); // [修正2] エラー後も開放して続行可能に
+      unlockInput();
     }, 1200);
   }
 }
