@@ -308,25 +308,32 @@ function selectMode(selected){
 
 function addUserBubble(text){
   const chat = document.getElementById("chat");
-  chat.innerHTML += `
-    <div class="bubble-row user-row fade">
-      <div class="bubble user">${escapeHtml(text)}</div>
-    </div>
-    <div class="time right">${nowTime()}</div>`;
+  const row = document.createElement("div");
+  row.className = "bubble-row user-row fade";
+  row.innerHTML = `<div class="bubble user">${escapeHtml(text)}</div>`;
+  chat.appendChild(row);
+  const time = document.createElement("div");
+  time.className = "time right";
+  time.innerText = nowTime();
+  chat.appendChild(time);
   window.scrollTo(0, document.body.scrollHeight);
 }
 
 function addHiiroBubble(text){
   const chat = document.getElementById("chat");
-  chat.innerHTML += `
-    <div class="bubble-row hiiro-row fade">
-      <div class="icon-wrap">
-        <div class="icon"><img src="hiiro.png" onerror="this.parentNode.innerText='ひ'"></div>
-        <div class="name">ひいろ</div>
-      </div>
-      <div class="bubble hiiro">${text}</div>
+  const row = document.createElement("div");
+  row.className = "bubble-row hiiro-row fade";
+  row.innerHTML = `
+    <div class="icon-wrap">
+      <div class="icon"><img src="hiiro.png" onerror="this.parentNode.innerText='ひ'"></div>
+      <div class="name">ひいろ</div>
     </div>
-    <div class="time">${nowTime()}</div>`;
+    <div class="bubble hiiro">${text}</div>`;
+  chat.appendChild(row);
+  const time = document.createElement("div");
+  time.className = "time";
+  time.innerText = nowTime();
+  chat.appendChild(time);
   window.scrollTo(0, document.body.scrollHeight);
 }
 
