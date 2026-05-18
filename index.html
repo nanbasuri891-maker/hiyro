@@ -25,7 +25,7 @@ body {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 12px 16px 140px;
+  padding: 4px 16px 140px;
 }
 
 /* アイコン＋名前 */
@@ -256,11 +256,11 @@ function unlockInput(){
 function selectMode(selected){
   mode = selected;
   document.getElementById("menu").style.display = "none";
-  phase = 'loop'; // [修正1] ループフェーズへ
+  phase = 'loop';
   addUserBubble(selected);
   setTimeout(() => {
-    addHiiroBubble(`…${selected}なんですね。`);
-    unlockInput(); // [修正2] ボタン選択後に開放
+    addHiiroBubble(`そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`);
+    unlockInput();
   }, 700);
 }
 
@@ -300,11 +300,9 @@ async function send(){
   lockInput(); // [修正2] 送信中は封鎖
 
   if(phase === 'pre'){
-    phase = 'select'; // [修正1] 即座にフェーズ変更
+    phase = 'select';
     setTimeout(() => {
-      addHiiroBubble("そっか。");
       document.getElementById("menu").style.display = "grid";
-      // ボタン選択待ちなのでここでは unlockInput しない
     }, 800);
     return;
   }
@@ -330,10 +328,7 @@ async function send(){
       if(data.next === "lp"){
         setTimeout(() => {
           addHiiroBubble(
-            `少し、そのまま一緒に見てみませんか。<br><br>
-            <a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">
-            見てみる
-            </a>`
+            `少し、そのまま一緒に見てみませんか。<br><a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">見てみる</a>`
           );
           // 終端なので unlockInput しない
         }, 1500);
