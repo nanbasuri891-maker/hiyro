@@ -1,356 +1,252 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ひいろ</title>
-
-<style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  padding: 0;
-  font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
-  color: #4b403d;
-  font-size: 14px;
-  background: #f7f3f0 url("bg.png") no-repeat center center fixed;
-  background-size: cover;
-}
-
-#app {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 24px 16px 160px;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-row {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 16px;
-  width: 100%;
-}
-
-.bubble-wrap {
-  display: flex;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.hiiro-row .bubble-wrap { justify-content: flex-start; }
-.user-row .bubble-wrap { justify-content: flex-end; }
-
-.icon-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 8px;
-  flex-shrink: 0;
-}
-
-.icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #efe6e2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  font-size: 12px;
-  color: #9b8480;
-}
-
-.icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.name {
-  font-size: 10px;
-  color: #9b8480;
-  margin-top: 4px;
-  text-align: center;
-}
-
-/* 吹き出しの内部を完全な白に統一 */
-.bubble {
-  max-width: 70%;
-  width: fit-content;
-  padding: 10px 14px;
-  border-radius: 18px;
-  line-height: 1.6;
-  font-size: 14px;
-  white-space: pre-line;
-  word-break: break-all;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-}
-
-.hiiro { border-top-left-radius: 4px; }
-.user { border-top-right-radius: 4px; }
-
-.time {
-  font-size: 10px;
-  opacity: 0.5;
-  margin-top: 4px;
-}
-
-.hiiro-row .time { margin-left: 48px; text-align: left; }
-.user-row .time { text-align: right; }
-
-/* プレひいろ（初期安定化層）メニュー */
-.menu {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  width: 100%;
-  max-width: 320px;
-  margin: 20px 0 20px 48px;
-}
-
-.menu div {
-  border: 1px solid #d9c8c2;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  cursor: pointer;
-  transition: 0.2s;
-  text-align: center;
-}
-
-.menu div:hover { background: #efe6e2; }
-
-.input-wrap {
-  position: fixed;
-  bottom: 20px;
-  left: 0;
-  width: 100%;
-  padding: 0 16px;
-  z-index: 100;
-}
-
-.input-inner {
-  max-width: 600px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 999px;
-  padding: 8px 14px;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-}
-
-textarea {
-  flex: 1;
-  border: none;
-  outline: none;
-  resize: none;
-  background: transparent;
-  font-size: 14px;
-  line-height: 1.5;
-  height: 24px;
-}
-
-button {
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 999px;
-  background: #e7c8c1;
-  color: white;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.fade {
-  animation: fade 0.6s ease forwards;
-}
-
-@keyframes fade {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.spacer { height: 60px; }
-
-/* CTA用のリンク装飾 */
-.cta-link {
-  display: inline-block;
-  margin-top: 10px;
-  color: #7d5f58;
-  border-bottom: 1px solid #cdb8b1;
-  text-decoration: none;
-  font-weight: bold;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ひいろ</title>
+  <style>
+    :root {
+      --bg-color: #fcfcfc;
+      --text-color: #333333;
+      --accent-color: #888888;
+      --border-color: #eef2f3;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #chat-container {
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border-left: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+    }
+    #chat-log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .bubble {
+      max-width: 85%;
+      line-height: 1.7;
+      font-size: 15px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .bubble.system {
+      align-self: flex-start;
+      color: var(--text-color);
+    }
+    .bubble.user {
+      align-self: flex-end;
+      color: var(--accent-color);
+      text-align: right;
+    }
+    .options-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .option-btn {
+      background: #ffffff;
+      border: 1px solid #e5e5e5;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .option-btn:hover {
+      border-color: var(--accent-color);
+    }
+    #input-container {
+      padding: 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+      background: #ffffff;
+    }
+    #user-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: var(--text-color);
+      padding: 4px 0;
+    }
+    #user-input::placeholder { color: #d0d0d0; }
+    #send-btn {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    #send-btn:disabled { color: #e0e0e0; cursor: default; }
+    .cta-container {
+      margin-top: 8px;
+    }
+    .cta-link {
+      display: inline-block;
+      color: var(--text-color);
+      text-decoration: underline;
+      font-size: 15px;
+    }
+  </style>
 </head>
-
 <body>
 
-<div id="app">
-  <div id="chat-flow">
-    <div class="chat-row hiiro-row fade">
-      <div class="bubble-wrap">
-        <div class="icon-wrap">
-          <div class="icon">
-            <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
-          </div>
-          <div class="name">ひいろ</div>
-        </div>
-        <div class="bubble hiiro">ひいろです。今日はどんなお話しましょう？</div>
-      </div>
-      <div class="time" id="init-time">00:00</div>
-    </div>
-  </div>
-
-  <div class="menu" id="menu">
-    <div onclick="selectMode('仕事')">仕事</div>
-    <div onclick="selectMode('恋愛')">恋愛</div>
-    <div onclick="selectMode('人間関係')">人間関係</div>
-    <div onclick="selectMode('その他')">その他</div>
-    <div onclick="selectMode('イベント')">イベント</div>
-    <div onclick="selectMode('雑談')">雑談</div>
-  </div>
-
-  <div class="spacer"></div>
-</div>
-
-<div class="input-wrap">
-  <div class="input-inner">
-    <textarea id="input" placeholder="..."></textarea>
-    <button onclick="sendFromInput()">➤</button>
+<div id="chat-container">
+  <div id="chat-log"></div>
+  <div id="input-container">
+    <input type="text" id="user-input" placeholder="…" disabled>
+    <button id="send-btn" onclick="handleSend()" disabled>➔</button>
   </div>
 </div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyucMnAb0JwFWNQXybEVCes2Ttfs4ZWIU3qTVOKjD2GoJcszn8qXzvrq9gxQaUmauibTA/exec";
-const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
+  // あなたのGAS WebアプリURL
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbymH7fuEgaBSsRJTAn9kieFPg3OwMurZQrJF-TB2TH7GUlLfxT__N8e1AnT0-gzq1F85w/exec"; 
 
-// 状態遷移の現在地（初期値は init）
-let currentId = "init";
+  // ご提示いただいたLPのURL
+  const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
 
-document.getElementById('init-time').innerText = nowTime();
+  const chatLog = document.getElementById("chat-log");
+  const userInput = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
 
-function nowTime(){
-  const d = new Date();
-  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-}
+  window.onload = () => {
+    initPreHiiro();
+  };
 
-// プレひいろ選択時（初期安定化）
-function selectMode(selected){
-  document.getElementById("menu").style.display = "none";
-  addUserBubble(selected);
-  
-  // 謎のなまりを完全に排除した、静かな初期引き取り
-  setTimeout(() => {
-    addHiiroBubble(`…${selected}なんですね。`);
-    // 初期IDをセットして交換ループの待機状態へ
-    currentId = "c1";
-  }, 700);
-}
-
-function sendFromInput() {
-  const input = document.getElementById("input");
-  const text = input.value.trim();
-  if(!text) return;
-  
-  addUserBubble(text);
-  input.value = "";
-  
-  // サーバー（GAS）へ位置とテキストをパッキングして送信
-  communicate(text);
-}
-
-async function communicate(userText) {
-  try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({ text: userText, currentId: currentId })
-    });
-
-    const data = await res.json();
-    
-    // 現在位置（ID）の同期更新
-    currentId = data.newId;
-
-    setTimeout(() => {
-      // 1. 引き取り文（catch）の描画
-      if(data.catchText) {
-        addHiiroBubble(data.catchText);
-      }
-      
-      // 2. 仮置き・ズラし文（offer）の描画
-      if(data.offerText) {
-        setTimeout(() => {
-          // next == lp（isLp == true）の時のみ、外部保持への遷移ゲートを表示
-          if(data.isLp) {
-            addHiiroBubble(`${data.offerText}<br><a href="${LP_URL}" target="_blank" class="cta-link">見てみる</a>`);
-          } else {
-            addHiiroBubble(data.offerText);
-          }
-        }, 600);
-      }
-    }, 600);
-
-  } catch(e) {
-    // 通信エラー時も静かに引き取る
-    setTimeout(() => addHiiroBubble("そっか"), 600);
+  function addBubble(sender, text) {
+    const bubble = document.createElement("div");
+    bubble.className = `bubble ${sender}`;
+    bubble.innerHTML = text; 
+    chatLog.appendChild(bubble);
+    chatLog.scrollTop = chatLog.scrollHeight;
   }
-}
 
-function addUserBubble(text){
-  const chatFlow = document.getElementById("chat-flow");
-  chatFlow.innerHTML += `
-    <div class="chat-row user-row fade">
-      <div class="bubble-wrap">
-        <div class="bubble user">${escapeHtml(text)}</div>
-      </div>
-      <div class="time">${nowTime()}</div>
-    </div>
-  `;
-  scrollToBottom();
-}
+  // ① プレひいろ（安定化の地面）
+  function initPreHiiro() {
+    addBubble("system", "ひいろです。今日はどんなお話しましょう？");
+    
+    const optionsContainer = document.createElement("div");
+    optionsContainer.className = "options-container";
+    
+    const menus = ["仕事", "恋愛", "人間関係", "その他", "イベント", "雑談"];
+    menus.forEach(menu => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerText = menu;
+      btn.onclick = () => selectPreHiiro(menu);
+      optionsContainer.appendChild(btn);
+    });
+    
+    chatLog.appendChild(optionsContainer);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
 
-function addHiiroBubble(text){
-  const chatFlow = document.getElementById("chat-flow");
-  chatFlow.innerHTML += `
-    <div class="chat-row hiiro-row fade">
-      <div class="bubble-wrap">
-        <div class="icon-wrap">
-          <div class="icon">
-            <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
-          </div>
-          <div class="name">ひいろ</div>
-        </div>
-        <div class="bubble hiiro">${text}</div>
-      </div>
-      <div class="time">${nowTime()}</div>
-    </div>
-  `;
-  scrollToBottom();
-}
+  function selectPreHiiro(choice) {
+    const containers = document.getElementsByClassName("options-container");
+    if(containers.length > 0) containers[containers.length - 1].style.display = "none";
+    
+    addBubble("user", choice);
+    
+    setTimeout(() => {
+      addBubble("system", `そっか<br>${choice}の中で、今ちょっと気になってる感じってありますか`);
+      userInput.disabled = false;
+      sendBtn.disabled = false;
+      userInput.focus();
+    }, 600);
+  }
 
-function scrollToBottom() {
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-}
+  // ② ひいろ本体（交換ループ）
+  async function handleSend() {
+    const text = userInput.value.trim();
+    if (!text) return;
 
-function escapeHtml(str){
-  return str.replace(/&/g,"&amp;")
-            .replace(/</g,"&lt;")
-            .replace(/>/g,"&gt;")
-            .replace(/"/g,"&quot;")
-            .replace(/'/g,"&#039;");
-}
+    userInput.value = "";
+    userInput.disabled = true;
+    sendBtn.disabled = true;
+
+    addBubble("user", text);
+
+    const dotsBubble = document.createElement("div");
+    dotsBubble.className = "bubble system";
+    dotsBubble.innerText = "…";
+    chatLog.appendChild(dotsBubble);
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+    try {
+      const response = await fetch(GAS_URL, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ text: text })
+      });
+
+      const data = await response.json();
+      
+      dotsBubble.remove();
+      addBubble("system", data.output);
+
+      // ③ 外部保持への移送判定
+      if (data.next === "lp") {
+        showCTA();
+      } else {
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        userInput.focus();
+      }
+
+    } catch (e) {
+      dotsBubble.remove();
+      addBubble("system", "…");
+      userInput.disabled = false;
+      sendBtn.disabled = false;
+    }
+  }
+
+  function showCTA() {
+    userInput.disabled = true;
+    sendBtn.disabled = true;
+
+    const ctaContainer = document.createElement("div");
+    ctaContainer.className = "cta-container";
+
+    const link = document.createElement("a");
+    link.className = "cta-link";
+    link.href = LP_URL;
+    link.target = "_blank";
+    link.innerText = "➔ そのまま、一緒に";
+
+    ctaContainer.appendChild(link);
+    chatLog.appendChild(ctaContainer);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  userInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter" && !userInput.disabled) {
+      handleSend();
+    }
+  });
 </script>
 
 </body>
