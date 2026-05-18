@@ -84,26 +84,26 @@ body {
   text-align: center;
 }
 
-/* 吹き出し本体（テキストの長さに合わせる設定） */
+/* 吹き出し本体（白に統一） */
 .bubble {
   max-width: 70%;
-  width: fit-content; /* 横いっぱいに広がらないように修正 */
+  width: fit-content;
   padding: 10px 14px;
   border-radius: 18px;
   line-height: 1.6;
   font-size: 14px;
   white-space: pre-line;
   word-break: break-all;
+  background: #ffffff; /* 吹き出しの中の色を白に変更 */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03); /* 白背景に馴染む僅かな影 */
 }
 
 .hiiro {
-  background: #f4eaea;
-  border-top-left-radius: 4px; /* ひいろ側は左上を少し尖らせる（LINE風） */
+  border-top-left-radius: 4px; /* 左上を少し尖らせる */
 }
 
 .user {
-  background: #ece7e2;
-  border-top-right-radius: 4px; /* ユーザー側は右上を少し尖らせる */
+  border-top-right-radius: 4px; /* 右上を少し尖らせる */
 }
 
 /* 時間 */
@@ -123,7 +123,7 @@ body {
   gap: 10px;
   width: 100%;
   max-width: 320px;
-  margin: 20px 0 20px 48px; /* ひいろのアイコン分、左に余白を開けて整列 */
+  margin: 20px 0 20px 48px;
 }
 
 .menu div {
@@ -131,7 +131,7 @@ body {
   border-radius: 999px;
   padding: 8px 12px;
   font-size: 12px;
-  background: rgba(255, 253, 252, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   cursor: pointer;
   transition: 0.2s;
   text-align: center;
@@ -260,8 +260,9 @@ function selectMode(selected){
   document.getElementById("menu").style.display = "none";
   addUserBubble(selected);
   
+  // 【修正】なまりを消し、静かに受け取る「なんですね」に修正
   setTimeout(() => {
-    addHiiroBubble(`…${selected}なんね。`);
+    addHiiroBubble(`…${selected}なんですね。`);
   }, 700);
 }
 
@@ -309,7 +310,7 @@ async function send(){
   addUserBubble(text);
   input.value = "";
 
-  // 初回入力：トリガーとして関係性を立ち上げる（GASには送らない）
+  // 初回入力トリガー
   if(!firstInputDone){
     firstInputDone = true;
     setTimeout(() => {
@@ -326,7 +327,7 @@ async function send(){
     return; 
   }
 
-  // 2回目以降の入力はGASへ送信
+  // 2回目以降の入力
   try{
     const res = await fetch(GAS_URL, {
       method: "POST",
