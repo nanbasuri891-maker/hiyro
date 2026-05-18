@@ -14,7 +14,6 @@ body {
   font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
   color: #4b403d;
   font-size: 14px;
-
   /* 背景画像 */
   background: url("bg.png") no-repeat center center fixed;
   background-size: cover;
@@ -28,15 +27,25 @@ body {
   padding: 24px 16px 140px;
 }
 
-/* アイコン＋名前 */
+/* アイコン＋名前＋吹き出しのコンテナ */
 .bubble-row {
   display: flex;
   align-items: flex-end;
   margin-bottom: 6px;
+  width: 100%;
 }
 
 .bubble-row.hiiro-row { justify-content: flex-start; }
 .bubble-row.user-row { justify-content: flex-end; }
+
+/* アイコン縦構造 */
+.icon-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
 
 /* アイコン */
 .icon {
@@ -62,14 +71,6 @@ body {
   color: #9b8480;
   margin-top: 4px;
   text-align: center;
-}
-
-/* アイコン縦構造 */
-.icon-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 8px;
 }
 
 /* 吹き出し */
@@ -126,13 +127,14 @@ body {
   opacity: 0.7;
 }
 
-/* 入力 */
+/* 入力固定エリア */
 .input-wrap {
   position: fixed;
   bottom: 20px;
   left: 0;
   width: 100%;
   padding: 0 16px;
+  z-index: 100;
 }
 
 .input-inner {
@@ -167,9 +169,9 @@ button {
   cursor: pointer;
 }
 
-/* アニメ */
+/* アニメーション */
 .fade {
-  animation: fade 1s ease;
+  animation: fade 1s ease forwards;
 }
 
 @keyframes fade {
@@ -178,7 +180,6 @@ button {
 }
 
 .spacer { height: 100px; }
-
 </style>
 </head>
 
@@ -186,7 +187,7 @@ button {
 
 <div id="app">
 
-  <!-- ひいろ初期 -->
+  <!-- ひいろ初期状態 -->
   <div class="bubble-row hiiro-row fade">
     <div class="icon-wrap">
       <div class="icon">
@@ -194,14 +195,14 @@ button {
       </div>
       <div class="name">ひいろ</div>
     </div>
-
-    <div class="bubble hiiro">
-こんにちは  
-どんなお話しましょうか
-    </div>
+    <div class="bubble hiiro">こんにちは  
+どんなお話しましょうか</div>
   </div>
+  <div class="time">00:00</div> <!-- 初期化時にスクリプトで現在時刻を上書き可能 -->
 
-  <!-- メニュー -->
+  <div id="chat"></div>
+
+  <!-- メニュー（初期非表示） -->
   <div class="menu" id="menu" style="display:none;">
     <div onclick="selectMode('仕事')">仕事</div>
     <div onclick="selectMode('恋愛')">恋愛</div>
@@ -211,12 +212,11 @@ button {
     <div onclick="selectMode('雑談')">雑談</div>
   </div>
 
-  <div id="chat"></div>
   <div class="spacer"></div>
 
 </div>
 
-<!-- 入力 -->
+<!-- 入力固定エリア -->
 <div class="input-wrap">
   <div class="input-inner">
     <textarea id="input" placeholder="..."></textarea>
@@ -231,6 +231,9 @@ const LP_URL = "https://fractalhistyle.wixsite.com/my-site-2";
 let mode = "";
 let firstInputDone = false;
 
+// 初期メッセージの時刻を現在時刻に設定
+document.querySelector('.time').innerText = nowTime();
+
 function nowTime(){
   const d = new Date();
   return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
@@ -240,17 +243,43 @@ function selectMode(selected){
   mode = selected;
   document.getElementById("menu").style.display = "none";
   addUserBubble(selected);
-  setTimeout(()=> addHiiroBubble(`…${selected}なんですね。`), 700);
+  
+  // モード選択後の応答。ここから自然に会話が繋がるように誘導
+  setTimeout(() => {
+    addHiiroBubble(`…${selected}なんですね。`);
+  }, 700);
 }
 
 function addUserBubble(text){
   const chat = document.getElementById("chat");
-  chat.innerHTML += `<div class="bubble user fade">${escapeHtml(text)}</div><div class="time right">${nowTime()}</div>`;
+  chat.innerHTML += `
+    <div class="bubble-row user-row fade">
+      <div class="bubble user">${escapeHtml(text)}</div>
+    </div>
+    <div class="time right">${nowTime()}</div>
+  `;
+  scrollToBottom();
 }
 
 function addHiiroBubble(text){
   const chat = document.getElementById("chat");
-  chat.innerHTML += `<div class="bubble hiiro fade">${text}</div><div class="time">${nowTime()}</div>`;
+  chat.innerHTML += `
+    <div class="bubble-row hiiro-row fade">
+      <div class="icon-wrap">
+        <div class="icon">
+          <img src="hiiro.png" onerror="this.parentNode.innerText='ひ'">
+        </div>
+        <div class="name">ひいろ</div>
+      </div>
+      <div class="bubble hiiro">${text}</div>
+    </div>
+    <div class="time">${nowTime()}</div>
+  `;
+  scrollToBottom();
+}
+
+function scrollToBottom() {
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
 async function send(){
@@ -261,40 +290,48 @@ async function send(){
   addUserBubble(text);
   input.value = "";
 
+  // 【修正】初回入力時は関係性を立ち上げるトリガーとし、GASへは送信しない（衝突回避）
   if(!firstInputDone){
     firstInputDone = true;
-    setTimeout(()=>{
+    setTimeout(() => {
       addHiiroBubble("ありがとうございます。今日は何はなす？");
       document.getElementById("menu").style.display = "grid";
-    },800);
+      scrollToBottom();
+    }, 800);
+    return; 
   }
 
+  // 2回目以降の入力はGASへ送信
   try{
-    const res = await fetch(GAS_URL,{
-      method:"POST",
-      body: JSON.stringify({mode,text})
+    // 【修正】CORSプレフライトを回避するため text/plain で送信
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain"
+      },
+      body: JSON.stringify({ mode, text })
     });
 
     const data = await res.json();
 
-    setTimeout(()=>{
+    setTimeout(() => {
       addHiiroBubble(data.output || "……");
 
       if(data.next === "lp"){
-        setTimeout(()=>{
+        setTimeout(() => {
           addHiiroBubble(
             `少し、そのまま一緒に見てみませんか。<br><br>
-            <a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">
+            <a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;font-weight:bold;">
             見てみる
             </a>`
           );
-        },1500);
+        }, 1500);
       }
+    }, 1200);
 
-    },1200);
-
-  }catch(e){
-    setTimeout(()=> addHiiroBubble("……"),1200);
+  } catch(e) {
+    // 通信エラー時も静かに受け取る
+    setTimeout(() => addHiiroBubble("……"), 1200);
   }
 }
 
@@ -305,7 +342,6 @@ function escapeHtml(str){
             .replace(/"/g,"&quot;")
             .replace(/'/g,"&#039;");
 }
-
 </script>
 
 </body>
