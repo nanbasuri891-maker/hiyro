@@ -347,7 +347,6 @@ async function send(){
 }
 
 async function sendMessage(text, input_type) {
-  // 既存のボタンを消す
   document.querySelectorAll(".exchange-btns").forEach(el => el.remove());
 
   addUserBubble(text);
@@ -360,6 +359,18 @@ async function sendMessage(text, input_type) {
     }, 800);
     return;
   }
+
+  // 即座に … を表示
+  const dotsRow = document.createElement("div");
+  dotsRow.className = "bubble-row hiiro-row fade";
+  dotsRow.innerHTML = `
+    <div class="icon-wrap">
+      <div class="icon"><img src="hiiro.png" onerror="this.parentNode.innerText='ひ'"></div>
+      <div class="name">ひいろ</div>
+    </div>
+    <div class="bubble hiiro" id="dots-bubble">…</div>`;
+  document.getElementById("chat").appendChild(dotsRow);
+  window.scrollTo(0, document.body.scrollHeight);
 
   const controller = new AbortController();
   const timeoutId  = setTimeout(() => controller.abort(), GAS_TIMEOUT_MS);
@@ -375,29 +386,36 @@ async function sendMessage(text, input_type) {
     const data = await res.json();
     currentModule = data.next || currentModule;
 
-    setTimeout(() => {
-      addHiiroBubble(data.output || "……");
+    // … を本文に差し替え
+    dotsRow.remove();
+    addHiiroBubble(data.output || "……");
 
-      if(data.next === "lp"){
-        setTimeout(() => {
-          addHiiroBubble(
-            `少し、そのまま一緒に見てみませんか。<br><a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">見てみる</a>`
-          );
-        }, 1500);
-      } else {
-        showExchangeButtons(data.buttons);
-        unlockInput();
-      }
-    }, 1200);
+    if(data.next === "lp"){
+      setTimeout(() => {
+        addHiiroBubble(
+          `少し、そのまま一緒に見てみませんか。<br><a href="${LP_URL}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;">見てみる</a>`
+        );
+      }, 1500);
+    } else {
+      showExchangeButtons(data.buttons);
+      unlockInput();
+    }
 
   } catch(e) {
     clearTimeout(timeoutId);
-    setTimeout(() => {
-      addHiiroBubble("……");
-      unlockInput();
-    }, 1200);
+    dotsRow.remove();
+    addHiiroBubble("……");
+    unlockInput();
   }
 }
+
+// ページ読み込み時にGASをウォームアップ
+window.addEventListener("load", () => {
+  fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({ text: "", module: "warmup", input_type: "warmup" })
+  }).catch(() => {});
+});
 
 function escapeHtml(str){
   return str.replace(/&/g,"&amp;")
