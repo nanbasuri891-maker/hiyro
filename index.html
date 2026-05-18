@@ -76,9 +76,10 @@ body {
   color: #4b403d;
 }
 .user {
-  background: #ece7e2;
-  border-top-right-radius: 4px;
-  color: #4b403d;
+  background: #f0eeeb;
+  border-radius: 20px;
+  border-bottom-right-radius: 6px;
+  color: #4a4a4a;
 }
 
 /* 時間 */
@@ -120,12 +121,12 @@ body {
 .input-inner {
   max-width: 600px;
   margin: 0 auto;
-  background: white;
+  background: #ffffff;
   border-radius: 999px;
   padding: 10px 14px;
   display: flex;
   align-items: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
 }
 textarea {
   flex: 1;
@@ -235,14 +236,14 @@ textarea::placeholder { color: #c8c0b8; }
 
 <script>
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// HIIRO — GAS連携版 + 内部エンジン統合
+// HIIRO — GAS連携版 + 内部エンジン統合 v2
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const GAS_URL       = "https://script.google.com/macros/s/AKfycbxvQkeAZ1Fzo45EKjywGiotNkpJh4e0zAO3IAF_x8AS9O7sUIKLQQCe0FQoPBsHvlXcEw/exec";
 const LP_URL        = "https://fractalhistyle.wixsite.com/my-site-2";
 const GAS_TIMEOUT   = 15000;
 
-// ── userId（ブラウザ固有） ─────────────────────────
+// ── userId ────────────────────────────────────────
 function getOrCreateUserId() {
   let uid = localStorage.getItem("hiiro_uid");
   if (!uid) {
@@ -258,15 +259,35 @@ const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("send-btn");
 const chat    = document.getElementById("chat");
 
-let phase         = "pre";   // pre → select → loop
-let currentModule = "catch"; // catch → exchange_c → front → exchange_f → yushuku → relation → lp
+let phase         = "pre";
+let currentModule = "catch";
 let mode          = "";
 
-// ── 過負荷検知 ────────────────────────────────────
-const OVERLOAD_WORDS = ["つらい","苦しい","パニック","消えたい","死にたい","限界","怖い","助けて","もう無理"];
-function isOverload(text) {
-  return text.length > 80 || OVERLOAD_WORDS.some(w => text.includes(w));
+// ── 過負荷・フラッシュバック検知 ─────────────────
+const OVERLOAD_WORDS = ["つらい","苦しい","パニック","消えたい","死にたい","限界","怖い","助けて","もう無理","消えたい","爆発しそう"];
+const FLASHBACK_WORDS = ["頭が真っ白","呼吸できない","過去","あのとき","思い出して","フラッシュ","止まらない"];
+
+function detectState(text) {
+  if (FLASHBACK_WORDS.some(w => text.includes(w))) return "flashback";
+  if (text.length > 80 || OVERLOAD_WORDS.some(w => text.includes(w))) return "overload";
+  return "normal";
 }
+
+// 状態別の応答
+const STATE_RESPONSE = {
+  // 過負荷：身体アンカー
+  overload: {
+    text:    "その中に、少し強い感覚も含まれてるように見える\n\nいまこの瞬間に少し戻ると\n足の裏や、呼吸の感じはどうだろう",
+    buttons: "少し落ち着いた,まだしんどい",
+    delay:   1800,
+  },
+  // フラッシュバック：意味を完全に外す、今ここだけ
+  flashback: {
+    text:    "少しだけ、いまの呼吸に戻ってみる\n\n吸うよりも、少しだけ長く吐くことに意識を向けてみてください\n\nいま見えているもの、ひとつ教えてもらえますか",
+    buttons: "少し落ち着いた,まだしんどい",
+    delay:   2000,
+  },
+};
 
 // ── 時刻 ─────────────────────────────────────────
 function nowTime() {
@@ -337,7 +358,6 @@ function removeDots() {
 
 // ── 交換ボタン表示 ────────────────────────────────
 function showExchangeButtons(buttons) {
-  // 既存ボタンを消す
   document.querySelectorAll(".exchange-btns").forEach(e => e.remove());
   if (!buttons) return;
   const list = buttons.split(",").map(s => s.trim()).filter(Boolean);
@@ -363,7 +383,7 @@ function showExchangeButtons(buttons) {
 async function showCTA() {
   lockInput();
   await sleep(1200);
-  addHiiroBubble("少し、そのまま一緒に見てみませんか");
+  addHiiroBubble("今日話してくれてありがとうございます。<br>その感じ、もう少し一緒に観てみませんか。");
   await sleep(800);
   const wrap = document.createElement("div");
   wrap.className = "cta-wrap fade";
@@ -385,7 +405,7 @@ async function selectMode(selected) {
   addUserBubble(selected);
   lockInput();
   await sleep(700);
-  addHiiroBubble(`そっか<br>${selected}の中で、今ちょっと気になってる感じってありますか`);
+  addHiiroBubble(`そっか。<br>${selected}のこと、どんなことが引っかかってますか？`);
   showExchangeButtons("わからない,なんか違う,もやもや,疲れた,その他");
   unlockInput();
 }
@@ -413,19 +433,21 @@ async function sendMessage(text, input_type) {
     return;
   }
 
-  // 過負荷検知 → フェーズをホールドして身体アンカーを返す
-  if (isOverload(text)) {
+  // 状態検知（過負荷・フラッシュバック）
+  const state = detectState(text);
+  if (state !== "normal") {
+    const sr = STATE_RESPONSE[state];
     addDots();
-    await sleep(1800);
+    await sleep(sr.delay);
     removeDots();
-    addHiiroBubble("その中に、少し強い感覚も含まれてるように見える<br><br>いまこの瞬間に少し戻ると<br>足の裏や、呼吸の感じはどうだろう");
-    showExchangeButtons("少し落ち着いた,まだしんどい");
+    addHiiroBubble(sr.text.replace(/\n/g, "<br>"));
+    showExchangeButtons(sr.buttons);
     unlockInput();
-    return;
+    return;  // フェーズはホールド
   }
 
-  // HIIROモード（relation以降）は長めのディレイ
-  const delay = (currentModule === "hiiro" || currentModule === "relation") ? 1800 : 900;
+  // HIIROモード・relation は長めのディレイ
+  const delay = (currentModule === "relation" || currentModule === "hiiro") ? 1800 : 900;
   addDots();
   await sleep(delay);
 
@@ -445,12 +467,11 @@ async function sendMessage(text, input_type) {
     currentModule = data.next || currentModule;
 
     removeDots();
-    addHiiroBubble(data.output || "……");
+    addHiiroBubble((data.output || "……").replace(/\n/g, "<br>"));
 
     if (data.next === "lp") {
       await showCTA();
     } else {
-      // GASから返ってきたボタン、なければデフォルト
       const btns = data.buttons || "うん,ううん,その他";
       showExchangeButtons(btns);
       unlockInput();
@@ -465,7 +486,7 @@ async function sendMessage(text, input_type) {
   }
 }
 
-// ── 起動時ウォームアップ（POST） ──────────────────
+// ── ウォームアップ ────────────────────────────────
 window.addEventListener("load", () => {
   fetch(GAS_URL, {
     method:  "POST",
