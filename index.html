@@ -607,7 +607,8 @@ async function sendMessage(text, input_type) {
       if (data.candidates && Array.isArray(data.candidates) && data.candidates.length) {
         showCandidates(data.candidates);
       } else if (data.buttons) {
-        showExchangeButtons(data.buttons);
+        const btnList = data.buttons.split(/[|,]/).map(s => s.trim()).filter(Boolean);
+        showCandidates(btnList);
       }
       unlockInput();
     }
