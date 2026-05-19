@@ -308,6 +308,7 @@ let mode          = "";
 let loopCount     = 0;
 let loopFired     = false;
 let genreShown    = false;    // ジャンルボタンを1回だけ出すフラグ
+let firstInput    = true;     // 最初の入力かどうか
 
 // ── 発話バッファ（直近5件） ────────────────────────
 const utteranceBuffer = [];
@@ -344,6 +345,11 @@ function detectHintStatus(text) {
 
   const shortCount = utteranceBuffer.filter(t => t.length <= 12).length;
   if (AVOIDANT_WORDS.some(w => text.includes(w)) || shortCount >= 3) return "avoidant";
+
+  // 身体語3連続検知 → 微小外部アンカー挿入トリガー
+  const BODY_WORDS = ["胸", "喉", "頭", "重い", "息", "お腹", "肩", "背中", "手", "足"];
+  const bodyCount = utteranceBuffer.filter(t => BODY_WORDS.some(w => t.includes(w))).length;
+  if (bodyCount >= 3) return "body_loop";
 
   return "normal";
 }
@@ -526,6 +532,17 @@ async function sendMessage(text, input_type) {
   pushBuffer(text);
   lockInput();
 
+  // 初回入力 → GASに送らずジャンルボタンを表示
+  if (firstInput) {
+    firstInput = false;
+    genreShown = true;
+    await sleep(600);
+    addHiiroBubble("ありがとうございます。今どんな感じがありますか？");
+    showCandidates(["仕事", "恋愛", "人間関係", "その他", "イベント", "雑談"]);
+    unlockInput();
+    return;
+  }
+
   // ジャンルボタンが押された場合はmodeとして記録
   const GENRES = ["仕事", "恋愛", "人間関係", "その他", "イベント", "雑談"];
   if (input_type === "button" && GENRES.includes(text) && !mode) {
@@ -593,16 +610,6 @@ async function sendMessage(text, input_type) {
     if (data.next === "lp") {
       await showCTA();
     } else {
-      // 初回GAS応答後にジャンルボタンを追加表示（1回だけ）
-      if (!genreShown) {
-        genreShown = true;
-        await sleep(400);
-        addHiiroBubble("ありがとうございます。今どんな感じがありますか？");
-        showCandidates(["仕事", "恋愛", "人間関係", "その他", "イベント", "雑談"]);
-        unlockInput();
-        return;
-      }
-
       // candidates（新仕様）を優先、なければ buttons（旧仕様）にフォールバック
       if (data.candidates && Array.isArray(data.candidates) && data.candidates.length) {
         showCandidates(data.candidates);
