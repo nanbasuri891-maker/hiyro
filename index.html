@@ -22,14 +22,13 @@ body {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  /* padding-bottomはJS側で動的に調整 */
-  padding: 4px 16px 200px;
+  padding: 4px 16px 140px;
 }
 
 /* アイコン＋名前 */
 .bubble-row {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-start; /* 修正：名前が落ちないよう flex-start に */
   margin-bottom: 6px;
 }
 .bubble-row.hiiro-row { justify-content: flex-start; }
@@ -111,65 +110,23 @@ body {
 }
 .menu div:hover { opacity: 0.7; }
 
-/* ─── 入力エリア（candidates込み）─────────────────── */
+/* 入力欄 */
 .input-wrap {
   position: fixed;
-  bottom: 0;
+  bottom: 20px;
   left: 0;
   width: 100%;
-  background: transparent;
-}
-
-/* candidates エリア（入力欄の上） */
-.candidates-area {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 0 16px 6px;
-}
-
-.candidates-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 6px;
-  animation: fadeUp 0.4s ease both;
-}
-
-.candidate-btn {
-  border: 1px solid #d9c8c2;
-  border-radius: 12px;
-  padding: 8px 12px;
-  font-size: 12px;
-  background: rgba(255,253,252,0.95);
-  color: #4b403d;
-  cursor: pointer;
-  transition: 0.2s;
-  font-family: inherit;
-  white-space: normal;
-  line-height: 1.45;
-  text-align: left;
-  backdrop-filter: blur(4px);
-}
-.candidate-btn:hover {
-  background: #f5eeeb;
-  border-color: #c8b4ae;
-}
-
-/* 入力欄本体 */
-.input-bar {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 10px 16px 20px;
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(8px);
-  border-top: 1px solid rgba(217,200,194,0.4);
+  padding: 0 16px;
 }
 .input-inner {
+  max-width: 600px;
+  margin: 0 auto;
   background: #ffffff;
   border-radius: 999px;
   padding: 10px 14px;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
 }
 textarea {
   flex: 1;
@@ -198,7 +155,7 @@ textarea::placeholder { color: #c8c0b8; }
 }
 .send-btn-el:disabled { opacity: 0.3; cursor: default; }
 
-/* 交換ボタン（チャット内） */
+/* 交換ボタン */
 .exchange-btns {
   display: flex;
   flex-wrap: wrap;
@@ -237,12 +194,14 @@ textarea::placeholder { color: #c8c0b8; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.spacer { height: 120px; }
+.spacer { height: 100px; }
 </style>
 </head>
 
 <body>
 <div id="app">
+
+  <!-- ひいろ初期発話 -->
   <div class="bubble-row hiiro-row fade">
     <div class="icon-wrap">
       <div class="icon">
@@ -250,41 +209,41 @@ textarea::placeholder { color: #c8c0b8; }
       </div>
       <div class="name">ひいろ</div>
     </div>
-    <div class="bubble hiiro">こんにちは。<br>今日はどんなお話しましょうか</div>
+    <div class="bubble hiiro">こんにちは
+どんなお話しましょうか</div>
+  </div>
+
+  <!-- モード選択メニュー -->
+  <div class="menu" id="menu" style="display:none;">
+    <div onclick="selectMode('仕事')">仕事</div>
+    <div onclick="selectMode('恋愛')">恋愛</div>
+    <div onclick="selectMode('人間関係')">人間関係</div>
+    <div onclick="selectMode('その他')">その他</div>
+    <div onclick="selectMode('イベント')">イベント</div>
+    <div onclick="selectMode('雑談')">雑談</div>
   </div>
 
   <div id="chat"></div>
   <div class="spacer"></div>
 </div>
 
-<!-- 固定入力エリア -->
-<div class="input-wrap" id="input-wrap">
-  <!-- candidates はここに動的挿入 -->
-  <div class="candidates-area" id="candidates-area"></div>
-
-  <div class="input-bar">
-    <div class="input-inner">
-      <textarea id="input" placeholder="…"></textarea>
-      <button class="send-btn-el" id="send-btn" onclick="send()">➤</button>
-    </div>
+<div class="input-wrap">
+  <div class="input-inner">
+    <textarea id="input" placeholder="…"></textarea>
+    <button class="send-btn-el" id="send-btn" onclick="send()">➤</button>
   </div>
 </div>
 
 <script>
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// HIIRO — フロント v4
-// 変更点:
-//   - loopFired後もGASへ通信するバグ修正
-//   - candidates UI（入力欄上グリッド）追加
-//   - overload時の微小環境アンカー対応
-//   - GASレスポンス candidates[] 対応
+// HIIRO — フロント v3
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const GAS_URL     = "https://script.google.com/macros/s/AKfycbz4Ioi6z1EhG56DXoO77ipy0-p5smmIL15fyIC7PymZLLZRF8VUCcdVWYzSn3gIkGavfQ/exec";
 const LP_URL      = "https://fractalhistyle.wixsite.com/my-site-2";
 const GAS_TIMEOUT = 15000;
 
-// ── userId ─────────────────────────────────────────
+// ── userId ────────────────────────────────────────
 function getOrCreateUserId() {
   let uid = localStorage.getItem("hiiro_uid");
   if (!uid) {
@@ -295,77 +254,69 @@ function getOrCreateUserId() {
 }
 const userId = getOrCreateUserId();
 
-// ── DOM参照 ────────────────────────────────────────
-const inputEl        = document.getElementById("input");
-const sendBtn        = document.getElementById("send-btn");
-const chat           = document.getElementById("chat");
-const candidatesArea = document.getElementById("candidates-area");
-
 // ── 状態変数 ──────────────────────────────────────
-let phase         = "loop";   // 最初から入力受付
+const inputEl = document.getElementById("input");
+const sendBtn = document.getElementById("send-btn");
+const chat    = document.getElementById("chat");
+
+let phase         = "pre";
 let currentModule = "catch";
 let mode          = "";
 let loopCount     = 0;
 let loopFired     = false;
-let genreShown    = false;    // ジャンルボタンを1回だけ出すフラグ
-let firstInput    = true;     // 最初の入力かどうか
+let bodyLoop      = 0;      // hiiroフェーズの身体軸ループ数
+let lastEnergy    = "";     // ユーザーの最後の選択語を保持
 
-// ── 発話バッファ（直近5件） ────────────────────────
+// ── 発話バッファ（直近5件） ───────────────────────
 const utteranceBuffer = [];
 const BUFFER_SIZE = 5;
 
 function pushBuffer(text) {
   utteranceBuffer.push(text);
   if (utteranceBuffer.length > BUFFER_SIZE) utteranceBuffer.shift();
+  lastEnergy = text; // 最後の発話を保持
 }
 
-// ── 検知エンジン ───────────────────────────────────
+// ── 検知エンジン ──────────────────────────────────
 const OVERLOAD_WORDS  = ["消えたい","死にたい","もう無理","限界","パニック","怖い","助けて","爆発しそう","呼吸できない","頭が真っ白"];
 const FLASHBACK_WORDS = ["思い出す","フラッシュ","また来た","止まらない","過去","あのとき"];
 const ANXIOUS_WORDS   = ["してくれない","わかってくれない","嫌われ","捨てられ","伝わらない","誰も","来ない","既読","返信"];
 const AVOIDANT_WORDS  = ["まあ","別に","どうせ","仕方ない","関係ない","慣れた","普通に"];
 
-// overload時の身体+微小環境アンカーリスト
-const ANCHOR_RESPONSES = [
-  "足の裏が、床についている。<br>窓の光が、少し入っている。<br><br>吸うよりも、少しだけ長く吐いてみる。",
-  "胸が重い。<br>部屋の空気が、静かに動いている。<br><br>それだけを、しばらく感じていて大丈夫。",
-  "今、この場所にいる。<br>遠くで何か音がする。<br><br>ただ、ここにいる。それだけでいい。",
-  "足の裏が床についている。<br>壁の色が見える。<br><br>少しだけ、呼吸が細くなっている。それに気づくだけでいい。",
-];
-let anchorIndex = 0;
-
 function detectHintStatus(text) {
+  // 過負荷・フラッシュバック（最優先）
   if (OVERLOAD_WORDS.some(w => text.includes(w)))  return "overload";
   if (FLASHBACK_WORDS.some(w => text.includes(w))) return "overload";
   if (text.length > 80)                             return "overload";
 
+  // バッファ込みの不安型検知
   const recentTexts = utteranceBuffer.join(" ");
   const anxiousHits = ANXIOUS_WORDS.filter(w => recentTexts.includes(w)).length;
   if (ANXIOUS_WORDS.some(w => text.includes(w)) || anxiousHits >= 2) return "anxious";
 
+  // 回避型検知（短文連続 or 合理化語）
   const shortCount = utteranceBuffer.filter(t => t.length <= 12).length;
   if (AVOIDANT_WORDS.some(w => text.includes(w)) || shortCount >= 3) return "avoidant";
-
-  // 身体語3連続検知 → 微小外部アンカー挿入トリガー
-  const BODY_WORDS = ["胸", "喉", "頭", "重い", "息", "お腹", "肩", "背中", "手", "足"];
-  const bodyCount = utteranceBuffer.filter(t => BODY_WORDS.some(w => t.includes(w))).length;
-  if (bodyCount >= 3) return "body_loop";
 
   return "normal";
 }
 
 function detectInputType(text) {
+  // 回避パターン（極短・「…」のみ）
   if (text.length <= 3 || /^[…。、]+$/.test(text)) return "avoidance_pattern";
+
+  // 繰り返しパターン（直近5発話で同一語3回以上）
   const tokens = text.split(/\s+|、|。/).filter(Boolean);
   for (const token of tokens) {
     if (token.length < 2) continue;
     const count = utteranceBuffer.filter(t => t.includes(token)).length;
     if (count >= 2) return "repeat";
   }
+
   return "free";
 }
 
-// ── 時刻 ──────────────────────────────────────────
+// ── 時刻 ─────────────────────────────────────────
 function nowTime() {
   const d = new Date();
   return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
@@ -432,36 +383,11 @@ function removeDots() {
   if (d) d.remove();
 }
 
-// ── candidates UI（入力欄上グリッド）────────────────
-function showCandidates(candidates) {
-  candidatesArea.innerHTML = "";
-  if (!candidates || !candidates.length) return;
-
-  const grid = document.createElement("div");
-  grid.className = "candidates-grid";
-
-  candidates.forEach(label => {
-    const btn = document.createElement("button");
-    btn.className = "candidate-btn";
-    btn.innerText = label;
-    btn.onclick = () => {
-      clearCandidates();
-      sendMessage(label, "button");
-    };
-    grid.appendChild(btn);
-  });
-
-  candidatesArea.appendChild(grid);
-}
-
-function clearCandidates() {
-  candidatesArea.innerHTML = "";
-}
-
-// ── チャット内の交換ボタン ───────────────────────
+// ── ボタン表示 ────────────────────────────────────
 function showExchangeButtons(buttons) {
   document.querySelectorAll(".exchange-btns").forEach(e => e.remove());
   if (!buttons) return;
+  // | 区切りと , 区切りの両方に対応
   const list = buttons.split(/[|,]/).map(s => s.trim()).filter(Boolean);
   if (!list.length) return;
 
@@ -484,7 +410,6 @@ function showExchangeButtons(buttons) {
 // ── CTA表示 ──────────────────────────────────────
 async function showCTA() {
   lockInput();
-  clearCandidates();
   await sleep(1200);
   addHiiroBubble("今日話してくれてありがとうございます。<br>その感じ、もう少し一緒に観てみませんか。");
   await sleep(800);
@@ -500,7 +425,7 @@ async function showCTA() {
   scrollBottom();
 }
 
-// ── loopCount接続フォーマット（1回だけ表示、その後は通常通りGASに通信する）
+// ── loopCount接続フォーマット（1回だけ） ─────────
 async function maybeShowLoopBridge() {
   if (loopFired || loopCount < 3) return;
   loopFired = true;
@@ -509,69 +434,66 @@ async function maybeShowLoopBridge() {
   showExchangeButtons("もう少し、一緒に見ていけそう|まだ少し");
 }
 
-// ── ジャンル選択（GASに送信して次へ）────────────────
-// ジャンルボタンは candidates として表示済み。
-// 押すと sendMessage("仕事", "button") のように通常フローへ流れる。
-// selectMode は不要になったため削除。
+// ── モード選択 ────────────────────────────────────
+async function selectMode(selected) {
+  document.getElementById("menu").style.display = "none";
+  phase = "loop";
+  mode  = selected;
+  addUserBubble(selected);
+  lockInput();
+  await sleep(700);
+  addHiiroBubble(`そっか。<br>${selected}のこと、今どんな感じがありますか？`);
+  showExchangeButtons("わからない|なんか違う|もやもや|疲れた|その他");
+  unlockInput();
+}
 
-// ── 送信ハンドラ ─────────────────────────────────
+// ── 送信ハンドラ ──────────────────────────────────
 async function send() {
+  if (phase === "select") return;
   const text = inputEl.value.trim();
   if (!text) return;
   inputEl.value = "";
   await sendMessage(text, detectInputType(text));
 }
 
-// ── GAS通信メイン ────────────────────────────────
+// ── GAS通信メイン ─────────────────────────────────
 async function sendMessage(text, input_type) {
-  // 既存のボタン類をクリア
   document.querySelectorAll(".exchange-btns").forEach(e => e.remove());
-  clearCandidates();
-
   addUserBubble(text);
   pushBuffer(text);
   lockInput();
 
-  // 初回入力 → GASに送らずジャンルボタンを表示
-  if (firstInput) {
-    firstInput = false;
-    genreShown = true;
+  // pre → モード選択
+  if (phase === "pre") {
+    phase = "select";
     await sleep(600);
-    addHiiroBubble("ありがとうございます。今どんな感じがありますか？");
-    showCandidates(["仕事", "恋愛", "人間関係", "その他", "イベント", "雑談"]);
-    unlockInput();
+    document.getElementById("menu").style.display = "flex";
     return;
-  }
-
-  // ジャンルボタンが押された場合はmodeとして記録
-  const GENRES = ["仕事", "恋愛", "人間関係", "その他", "イベント", "雑談"];
-  if (input_type === "button" && GENRES.includes(text) && !mode) {
-    mode = text;
   }
 
   // hint_status 判定
   const hintStatus = detectHintStatus(text);
 
-  // overload/flashback → フェーズホールド＋身体+環境アンカー
+  // overload/flashback → フェーズをホールドして身体アンカー
   if (hintStatus === "overload") {
     addDots();
     await sleep(2000);
     removeDots();
-    const anchor = ANCHOR_RESPONSES[anchorIndex % ANCHOR_RESPONSES.length];
-    anchorIndex++;
-    addHiiroBubble(anchor);
+    addHiiroBubble("足の裏が、床についている。<br>今、ここにいる。<br><br>吸うよりも、少しだけ長く吐くことに意識を向けてみる。");
     await sleep(1500);
-    showCandidates(["少し落ち着いた", "まだしんどい", "続けたい"]);
+    showExchangeButtons("少し落ち着いた|まだしんどい");
     unlockInput();
     return;
   }
 
   // catchフェーズのloopCountを更新
-  // ★ 修正点: loopFired後もreturnしない。表示は1回だけ、通信は毎回行う
   if (currentModule === "catch") {
     loopCount++;
     await maybeShowLoopBridge();
-    // loopFiredが立った場合は接続フォーマットを出したが、GASには引き続き送る
+    if (loopFired && loopCount >= 3) {
+      unlockInput();
+      return;
+    }
   }
 
   // hiiro/session は長めのディレイ
@@ -590,19 +512,25 @@ async function sendMessage(text, input_type) {
         userId,
         mode,
         text,
-        module:      currentModule,
+        module:       currentModule,
+        currentPhase: currentModule,
         input_type,
-        hint_status: hintStatus,
-        loop_count:  loopCount
+        hint_status:  hintStatus,
+        loop_count:   loopCount,
+        loopCount,
+        bodyLoop,
+        lastEnergy
       }),
       signal: controller.signal
     });
     clearTimeout(timeoutId);
 
     const data = await res.json();
+    currentModule = data.next || currentModule;
 
-    // モジュール更新
-    if (data.next) currentModule = data.next;
+    // hiiroフェーズのループ数を更新
+    if (currentModule === "hiiro") bodyLoop++;
+    else bodyLoop = 0;
 
     removeDots();
     addHiiroBubble((data.output || "…").replace(/\n/g, "<br>"));
@@ -610,27 +538,21 @@ async function sendMessage(text, input_type) {
     if (data.next === "lp") {
       await showCTA();
     } else {
-      // candidates（新仕様）を優先、なければ buttons（旧仕様）にフォールバック
-      if (data.candidates && Array.isArray(data.candidates) && data.candidates.length) {
-        showCandidates(data.candidates);
-      } else if (data.buttons) {
-        const btnList = data.buttons.split(/[|,]/).map(s => s.trim()).filter(Boolean);
-        showCandidates(btnList);
-      }
+      const btns = data.buttons || "";
+      showExchangeButtons(btns);
       unlockInput();
     }
 
   } catch (e) {
     clearTimeout(timeoutId);
     removeDots();
-    // タイムアウト/エラー時のフォールバック（GAS未到達でも最低限応答）
     addHiiroBubble("…");
-    showCandidates(["近い", "違う", "わからない"]);
+    showExchangeButtons("近い|違う|わからない");
     unlockInput();
   }
 }
 
-// ── ウォームアップ ───────────────────────────────
+// ── ウォームアップ ────────────────────────────────
 window.addEventListener("load", () => {
   fetch(GAS_URL, {
     method:  "POST",
@@ -639,7 +561,7 @@ window.addEventListener("load", () => {
   }).catch(() => {});
 });
 
-// ── Enter送信 ────────────────────────────────────
+// ── Enter送信 ─────────────────────────────────────
 inputEl.addEventListener("keypress", e => {
   if (e.key === "Enter" && !e.shiftKey && !inputEl.disabled) {
     e.preventDefault();
