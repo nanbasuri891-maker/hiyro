@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>HIIRO</title>
+
   <style>
-    /* 意匠性固定のためのベーススタイリング */
     * {
       box-sizing: border-box;
       margin: 0;
@@ -36,7 +36,6 @@
       box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
     }
 
-    /* 対話タイムラインエリア */
     #chat-timeline {
       flex: 1;
       overflow-y: auto;
@@ -47,13 +46,11 @@
       scroll-behavior: smooth;
     }
 
-    /* スクロールバーの非表示（美観維持） */
     #chat-timeline::-webkit-scrollbar {
       width: 0px;
       background: transparent;
     }
 
-    /* 吹き出しの空気感と余白 */
     .message-row {
       display: flex;
       width: 100%;
@@ -90,7 +87,6 @@
       border: 1px solid #242430;
     }
 
-    /* 特殊接続提示：後出しの「静かな佇まい」 */
     .bubble.connection-prompt {
       background-color: #1a1518;
       border: 1px solid #2c1e23;
@@ -103,7 +99,6 @@
       margin: 10px 0;
     }
 
-    /* ドット点滅インジケータ（通信中） */
     .typing-indicator {
       display: flex;
       gap: 6px;
@@ -119,10 +114,14 @@
       animation: blink 1.4s infinite both;
     }
 
-    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
 
-    /* ボトムコントロールエリア（ボタンと入力） */
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
     #control-panel {
       padding: 16px 20px 24px 20px;
       background-color: #16161a;
@@ -132,36 +131,57 @@
       gap: 14px;
     }
 
-    /* 等比グリッド選択肢ボタンの完全制御 */
     #button-container {
       display: grid;
       gap: 10px;
       width: 100%;
     }
 
-    /* ボタン数に応じた動的クラス */
-    #button-container.grid-1 { grid-template-columns: 1fr; }
-    #button-container.grid-2 { grid-template-columns: 1fr 1fr; }
-    #button-container.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-    #button-container.grid-4 { grid-template-columns: 1fr 1fr; } /* 2x2 */
-    #button-container.grid-multi { grid-template-columns: 1fr 1fr 1fr; } /* 3列折り返し */
+    #button-container.grid-1 {
+      grid-template-columns: 1fr;
+    }
+
+    #button-container.grid-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    #button-container.grid-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    #button-container.grid-4 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    #button-container.grid-multi {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
 
     .action-btn {
       background-color: #1c1c24;
       border: 1px solid #2a2a38;
       color: #c7c7cc;
-      padding: 12px 8px;
+
+      padding: 12px 10px;
       border-radius: 10px;
+
       font-size: 13.5px;
+      line-height: 1.35;
+
       cursor: pointer;
-      text-align: center;
       transition: all 0.2s ease;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.3;
+
+      min-height: 64px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      text-align: center;
+
+      word-break: break-word;
+      overflow-wrap: break-word;
+      white-space: normal;
     }
 
     .action-btn:active {
@@ -170,7 +190,6 @@
       color: #ffffff;
     }
 
-    /* 入力フォーム構造 */
     #input-form {
       display: flex;
       background-color: #1c1c24;
@@ -213,169 +232,294 @@
       color: #ffffff;
     }
 
-    /* アニメーション物理定義 */
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @keyframes blink {
-      0% { opacity: .2; }
-      20% { opacity: 1; }
-      100% { opacity: .2; }
+      0% {
+        opacity: .2;
+      }
+      20% {
+        opacity: 1;
+      }
+      100% {
+        opacity: .2;
+      }
     }
   </style>
 </head>
+
 <body>
 
 <div id="app-container">
+
   <div id="chat-timeline"></div>
-  
+
   <div id="control-panel">
+
     <div id="button-container"></div>
+
     <form id="input-form" onsubmit="handleFormSubmit(event)">
-      <input type="text" id="user-input" placeholder="ここにある感覚を言葉にしてみる" autocomplete="off">
+
+      <input
+        type="text"
+        id="user-input"
+        placeholder="ここにある感覚を言葉にしてみる"
+        autocomplete="off"
+      >
+
       <button type="submit" id="send-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
       </button>
+
     </form>
+
   </div>
+
 </div>
 
 <script>
-  // ==========================================
-  // 【結合完了】デプロイ済みGASウェブアプリURL
-  // ==========================================
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxv63-O_W84Ts_2nuJWvaMZrRfeFVQwIkwfvwg0BQpJ7oe28FgPgiPyYULPN7KOP0QW/exec"; 
 
-  // クライアント側ステート管理
+  // ==========================================
+  // GAS WEBAPP URL
+  // ==========================================
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwxaD4ZUuVPzB8eF3rmu8-OrkOmYIsBtE_DFgZM1XSqE35G0kjfZ9mBn7w6L_DZKUWEmA/exec";
+  // ==========================================
+  // LOCAL STORAGE STATE
+  // ==========================================
   let state = {
-    userId: 'user_' + Math.random().toString(36).substring(2, 11),
-    currentPhase: 'catch',
+    userId: localStorage.getItem('userId') || crypto.randomUUID(),
+    currentPhase: localStorage.getItem('currentPhase') || 'catch',
     loopCount: 0,
     loopFired: false
   };
 
-  // 直近5発話バッファ（構造化保持）
+  localStorage.setItem('userId', state.userId);
+  localStorage.setItem('currentPhase', state.currentPhase);
+
+  // ==========================================
+  // BUFFER
+  // ==========================================
   const utteranceBuffer = [];
 
-  // 強情動・身体感覚語リスト（過負荷検知用）
-  const OVERLOAD_WORDS = ['消えたい','もう無理','怖い','震え','息が','真っ白','くるしい','しんどい','死にたい','助けて'];
-  // 他者依存語リスト（不安型検知用）
-  const ANXIOUS_WORDS = ['してくれない','わかってくれない','ひとり','誰も','伝わらない','嫌われ','見捨て','不安','連絡','返信'];
-  // 合理化語リスト（回避型検知用）
-  const AVOIDANT_WORDS = ['まあ','別に','どうせ','仕方ない','大丈夫','関係ない','慣れた','自分でできる','意味ない','ロジック'];
+  // ==========================================
+  // WORD MAPS
+  // ==========================================
+  const OVERLOAD_WORDS = [
+    '消えたい','もう無理','怖い','震え',
+    '息が','真っ白','くるしい','しんどい',
+    '死にたい','助けて'
+  ];
 
+  const ANXIOUS_WORDS = [
+    'してくれない','わかってくれない','ひとり',
+    '誰も','伝わらない','嫌われ',
+    '見捨て','不安','連絡','返信'
+  ];
+
+  const AVOIDANT_WORDS = [
+    'まあ','別に','どうせ',
+    '仕方ない','大丈夫','関係ない',
+    '慣れた','自分でできる',
+    '意味ない','ロジック'
+  ];
+
+  // ==========================================
+  // INITIALIZE
+  // ==========================================
   window.addEventListener('DOMContentLoaded', () => {
-    // 初期配置メッセージのトリガー（スプシ初期接続）
     executePipeline("…", "free");
   });
 
-  // フォーム送信制御
+  // ==========================================
+  // FORM SUBMIT
+  // ==========================================
   function handleFormSubmit(event) {
+
     event.preventDefault();
+
     const inputEl = document.getElementById('user-input');
     const text = inputEl.value.trim();
+
     if (!text) return;
 
     inputEl.value = '';
+
     appendMessageRow(text, 'user');
-    
-    // 発話バッファの更新と特徴量解析
+
     updateUtteranceBuffer(text);
-    
-    // 検知エンジンの駆動
+
     const analysis = analyzeUtterance(text);
-    
-    // フェーズに応じた往復カウント管理
+
     if (state.currentPhase === 'catch') {
       state.loopCount++;
     }
 
-    executePipeline(text, analysis.inputType, analysis.hintStatus);
+    executePipeline(
+      text,
+      analysis.inputType,
+      analysis.hintStatus
+    );
   }
 
-  // ボタンタップ選択時の制御
+  // ==========================================
+  // BUTTON TAP
+  // ==========================================
   function handleButtonTap(buttonText) {
+
+    renderButtons("");
+
     appendMessageRow(buttonText, 'user');
+
     updateUtteranceBuffer(buttonText);
-    
+
     if (state.currentPhase === 'catch') {
       state.loopCount++;
     }
-    
-    // ボタン押下時は input_type に選択テキスト、hint_status は normal として配管
-    executePipeline(buttonText, buttonText, "normal");
+
+    executePipeline(
+      buttonText,
+      buttonText,
+      "normal"
+    );
   }
 
-  // 発話バッファの蓄積処理（最大5件）
+  // ==========================================
+  // BUFFER UPDATE
+  // ==========================================
   function updateUtteranceBuffer(text) {
+
     utteranceBuffer.push({
       text: text,
       charLen: text.length,
       timestamp: Date.now()
     });
+
     if (utteranceBuffer.length > 5) {
       utteranceBuffer.shift();
     }
   }
 
-  // フロントエンド5大検知エンジン
+  // ==========================================
+  // ANALYZE
+  // ==========================================
   function analyzeUtterance(text) {
+
     let hintStatus = "normal";
     let inputType = "free";
 
-    // 1. 過負荷・フラッシュバック検知
     const hasOverloadWord = OVERLOAD_WORDS.some(w => text.includes(w));
+
     if (hasOverloadWord) {
       hintStatus = "overload";
     }
 
-    // 2. 不安型愛着スタイルの複合検知
     const hasAnxiousWord = ANXIOUS_WORDS.some(w => text.includes(w));
-    const recentAnxiousCount = utteranceBuffer.slice(-3).filter(u => ANXIOUS_WORDS.some(w => u.text.includes(w))).length;
+
+    const recentAnxiousCount = utteranceBuffer
+      .slice(-3)
+      .filter(u => ANXIOUS_WORDS.some(w => u.text.includes(w)))
+      .length;
+
     if (hasAnxiousWord || recentAnxiousCount >= 2) {
-      if (hintStatus !== "overload") hintStatus = "anxious";
-    }
 
-    // 3. 回避型愛着スタイルの複合検知
-    const hasAvoidantWord = AVOIDANT_WORDS.some(w => text.includes(w));
-    const isConsecutiveShort = utteranceBuffer.slice(-3).length >= 3 && utteranceBuffer.slice(-3).every(u => u.charLen <= 15);
-    if (hasAvoidantWord || (isConsecutiveShort && text.length <= 15)) {
-      if (hintStatus !== "overload" && hintStatus !== "anxious") hintStatus = "avoidant";
-    }
-
-    // 4. 繰り返しパターンの検知
-    if (utteranceBuffer.length >= 3) {
-      if (text.length >= 3) {
-        let matchCount = 0;
-        utteranceBuffer.forEach(u => {
-          if (u.text.includes(text.substring(0, 3))) matchCount++;
-        });
-        if (matchCount >= 3) inputType = "repeat";
+      if (hintStatus !== "overload") {
+        hintStatus = "anxious";
       }
     }
 
-    // 5. 回避パターンの検知（「…」のみ、または極短発話の連続）
-    if (text === '…' || text === '...' || (text.length <= 4 && utteranceBuffer.slice(-2).every(u => u.charLen <= 4))) {
+    const hasAvoidantWord = AVOIDANT_WORDS.some(w => text.includes(w));
+
+    const isConsecutiveShort =
+      utteranceBuffer.slice(-3).length >= 3 &&
+      utteranceBuffer.slice(-3).every(u => u.charLen <= 15);
+
+    if (
+      hasAvoidantWord ||
+      (isConsecutiveShort && text.length <= 15)
+    ) {
+
+      if (
+        hintStatus !== "overload" &&
+        hintStatus !== "anxious"
+      ) {
+        hintStatus = "avoidant";
+      }
+    }
+
+    if (utteranceBuffer.length >= 3) {
+
+      if (text.length >= 3) {
+
+        let matchCount = 0;
+
+        utteranceBuffer.forEach(u => {
+          if (u.text.includes(text.substring(0, 3))) {
+            matchCount++;
+          }
+        });
+
+        if (matchCount >= 3) {
+          inputType = "repeat";
+        }
+      }
+    }
+
+    if (
+      text === '…' ||
+      text === '...' ||
+      (
+        text.length <= 4 &&
+        utteranceBuffer
+          .slice(-2)
+          .every(u => u.charLen <= 4)
+      )
+    ) {
       inputType = "avoidance_pattern";
     }
 
-    return { hintStatus, inputType };
+    return {
+      hintStatus,
+      inputType
+    };
   }
 
-  // 統合配管パイプライン（通信処理）
+  // ==========================================
+  // MAIN PIPELINE
+  // ==========================================
   function executePipeline(text, inputType, hintStatus = "normal") {
+
     const timeline = document.getElementById('chat-timeline');
-    
-    // インジケータ生成
+
     const indicatorRow = document.createElement('div');
+
     indicatorRow.className = 'message-row hiiro';
-    indicatorRow.innerHTML = '<div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
+
+    indicatorRow.innerHTML = `
+      <div class="bubble">
+        <div class="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    `;
+
     timeline.appendChild(indicatorRow);
+
     timeline.scrollTop = timeline.scrollHeight;
 
-    // ボタンの一次消去（通信中の誤操作防止）
     renderButtons("");
 
     const payload = {
@@ -386,83 +530,173 @@
       hint_status: hintStatus
     };
 
-    // CORSプリフライトを回避する定石（text/plainで送出し裏でパース）
     fetch(GAS_URL, {
       method: 'POST',
       mode: 'cors',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(payload)
     })
+
     .then(res => res.json())
+
     .then(data => {
+
       indicatorRow.remove();
-      
-      // バックエンドからの抽出パーツの展開
-      appendMessageRow(data.output, 'hiiro');
-      state.currentPhase = data.next || state.currentPhase;
-      
-      // 差分3往復超過かつ未発火時の「接続提示」後出し処理
-      if (state.currentPhase === 'catch' && state.loopCount > 3 && !state.loopFired) {
+
+      appendMessageRow(data.output || "…", 'hiiro');
+
+      state.currentPhase =
+        data.next || state.currentPhase;
+
+      localStorage.setItem(
+        'currentPhase',
+        state.currentPhase
+      );
+
+      if (
+        state.currentPhase === 'catch' &&
+        state.loopCount > 3 &&
+        !state.loopFired
+      ) {
+
         state.loopFired = true;
+
         setTimeout(() => {
-          appendMessageRow("もう少し、一緒に見ていけそうですか。", 'hiiro', true);
+
+          appendMessageRow(
+            "もう少し、一緒に見ていけそうですか。",
+            'hiiro',
+            true
+          );
+
           state.currentPhase = 'session';
+
+          localStorage.setItem(
+            'currentPhase',
+            state.currentPhase
+          );
+
           renderButtons("はい|まだ少し");
+
         }, 800);
+
       } else {
+
         renderButtons(data.buttons);
+
       }
+
     })
+
     .catch(err => {
+
       indicatorRow.remove();
+
       appendMessageRow("…", 'hiiro');
+
       console.error("Pipeline Error:", err);
+
     });
   }
 
-  // メッセージ描画
-  function appendMessageRow(text, side, isConnectionPrompt = false) {
-    const timeline = document.getElementById('chat-timeline');
+  // ==========================================
+  // MESSAGE APPEND
+  // ==========================================
+  function appendMessageRow(
+    text,
+    side,
+    isConnectionPrompt = false
+  ) {
+
+    const timeline =
+      document.getElementById('chat-timeline');
+
     const row = document.createElement('div');
+
     row.className = `message-row ${side}`;
-    
+
     const bubble = document.createElement('div');
-    bubble.className = isConnectionPrompt ? 'bubble connection-prompt' : 'bubble';
+
+    bubble.className =
+      isConnectionPrompt
+      ? 'bubble connection-prompt'
+      : 'bubble';
+
     bubble.textContent = text;
-    
+
     row.appendChild(bubble);
+
     timeline.appendChild(row);
+
     timeline.scrollTop = timeline.scrollHeight;
   }
 
-  // 等比グリッド選択肢ボタンの動的生成エンジン
+  // ==========================================
+  // BUTTON RENDER
+  // ==========================================
   function renderButtons(buttonsString) {
-    const container = document.getElementById('button-container');
+
+    const container =
+      document.getElementById('button-container');
+
     container.innerHTML = '';
-    container.className = '';
+
+    container.classList.remove(
+      'grid-1',
+      'grid-2',
+      'grid-3',
+      'grid-4',
+      'grid-multi'
+    );
 
     if (!buttonsString) return;
 
-    const btnArray = buttonsString.split('|').map(b => b.trim()).filter(b => b);
+    const btnArray = buttonsString
+      .split('|')
+      .map(b => b.trim())
+      .filter(b => b);
+
     const count = btnArray.length;
 
     if (count === 0) return;
 
-    // グリッド配置のクラス分岐
-    if (count === 1) container.classList.add('grid-1');
-    else if (count === 2) container.classList.add('grid-2');
-    else if (count === 3) container.classList.add('grid-3');
-    else if (count === 4) container.classList.add('grid-4');
-    else container.classList.add('grid-multi');
+    if (count === 1) {
+      container.classList.add('grid-1');
+    }
+
+    else if (count === 2) {
+      container.classList.add('grid-2');
+    }
+
+    else if (count === 3) {
+      container.classList.add('grid-3');
+    }
+
+    else if (count === 4) {
+      container.classList.add('grid-4');
+    }
+
+    else {
+      container.classList.add('grid-multi');
+    }
 
     btnArray.forEach(btnText => {
+
       const btn = document.createElement('div');
+
       btn.className = 'action-btn';
+
       btn.textContent = btnText;
+
       btn.onclick = () => handleButtonTap(btnText);
+
       container.appendChild(btn);
+
     });
   }
+
 </script>
 
 </body>
