@@ -239,7 +239,7 @@ textarea::placeholder { color: #c8c0b8; }
 // HIIRO — フロント v3
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const GAS_URL     = "https://script.google.com/macros/s/AKfycbz4Ioi6z1EhG56DXoO77ipy0-p5smmIL15fyIC7PymZLLZRF8VUCcdVWYzSn3gIkGavfQ/exec";
+const GAS_URL     = "https://script.google.com/macros/s/AKfycbxw8lv05vdlj2ltcaWWHX88Q85oiucLGu5foZz7vgSe_Tm6qkGm4VSsqTXggTfMYna0Qg/exec";
 const LP_URL      = "https://fractalhistyle.wixsite.com/my-site-2";
 const GAS_TIMEOUT = 15000;
 
@@ -408,8 +408,10 @@ function showExchangeButtons(buttons) {
 }
 
 // ── CTA表示 ──────────────────────────────────────
-async function showCTA() {
+async function showCTA(lpUrl, ctaText) {
   lockInput();
+  const url  = lpUrl   || LP_URL;
+  const text = ctaText || "➔ そのまま、一緒に";
   await sleep(1200);
   addHiiroBubble("今日話してくれてありがとうございます。<br>その感じ、もう少し一緒に観てみませんか。");
   await sleep(800);
@@ -417,9 +419,9 @@ async function showCTA() {
   wrap.className = "cta-wrap fade";
   const a = document.createElement("a");
   a.className = "cta-link";
-  a.href = LP_URL;
+  a.href = url;
   a.target = "_blank";
-  a.innerText = "➔ そのまま、一緒に";
+  a.innerText = text;
   wrap.appendChild(a);
   chat.appendChild(wrap);
   scrollBottom();
@@ -471,33 +473,95 @@ async function sendMessage(text, input_type) {
     return;
   }
 
-  // hint_status 判定
+  // hint_status判定
   const hintStatus = detectHintStatus(text);
 
-  // overload/flashback → フェーズをホールドして身体アンカー
+  // overload → 身体アンカーのみ（フェーズホールド）
   if (hintStatus === "overload") {
     addDots();
     await sleep(2000);
     removeDots();
     addHiiroBubble("足の裏が、床についている。<br>今、ここにいる。<br><br>吸うよりも、少しだけ長く吐くことに意識を向けてみる。");
-    await sleep(1500);
+    await sleep(2000);
     showExchangeButtons("少し落ち着いた|まだしんどい");
     unlockInput();
     return;
   }
 
-  // catchフェーズのloopCountを更新
+  // catchフェーズのloopCount更新
   if (currentModule === "catch") {
     loopCount++;
-    await maybeShowLoopBridge();
-    if (loopFired && loopCount >= 3) {
+
+    // ① 認識の回復：loopCount=3で「近い」が来た → catch_torqueへ
+    if (loopCount >= 3 && text === "近い") {
+      addDots();
+      await sleep(1800); // 「少し」のときだけ長めのディレイ
+      removeDots();
+      addHiiroBubble("…少し、見えてきた感じしない？");
+      currentModule = "catch_torque";
+      showExchangeButtons("少し|まだ|わからない");
       unlockInput();
       return;
     }
   }
 
-  // hiiro/session は長めのディレイ
-  const delay = (currentModule === "hiiro" || currentModule === "session") ? 1800 : 1000;
+  // ② 身体の回復：hiiroで「置いておく」が来た → hiiro_torqueへ
+  if (currentModule === "hiiro" && (text === "置いておく" || text === "もう少し見る")) {
+    const bodyPart = lastEnergy || "その感じ";
+    addDots();
+    await sleep(1800);
+    removeDots();
+    addHiiroBubble(`${bodyPart}、少し変わった感じある？`);
+    currentModule = "hiiro_torque";
+    showExchangeButtons("少し|あまり|わからない");
+    unlockInput();
+    return;
+  }
+
+  // hiiro_torqueのフォロー（どれが来ても次の軸へ）
+  if (currentModule === "hiiro_torque") {
+    if (text === "あまり") {
+      addDots();
+      await sleep(1000);
+      removeDots();
+      addHiiroBubble("それでいい。そのままで。");
+      await sleep(800);
+    } else if (text === "わからない") {
+      addDots();
+      await sleep(1000);
+      removeDots();
+      addHiiroBubble("わからなくていい。");
+      await sleep(800);
+    }
+    bodyLoop++;
+    currentModule = "hiiro_flow"; // 次の軸へ
+  }
+
+  // ③ 存在の回復：offer_preで「近い」が来た → 存在の回復メッセージ
+  if (currentModule === "offer_pre" && text === "近い") {
+    addDots();
+    await sleep(1800);
+    removeDots();
+    addHiiroBubble("今、ここにいる感じ、する？");
+    currentModule = "offer_existence";
+    showExchangeButtons("少し|わからない");
+    unlockInput();
+    return;
+  }
+
+  // offer_existenceの後 → offer本体へ
+  if (currentModule === "offer_existence") {
+    await sleep(1800);
+    addHiiroBubble("もう少し戻れるかもしれない。<br>一緒に、見てみませんか。");
+    currentModule = "offer_3";
+    showExchangeButtons("YES|NO");
+    unlockInput();
+    return;
+  }
+
+  // hiiro/session/offer系は長めのディレイ
+  const delay = ["hiiro","hiiro_flow","hiiro_dist","hiiro_dir","hiiro_contour","session","offer","offer_pre"].includes(currentModule) ? 1800 : 1000;
+
   addDots();
   await sleep(delay);
 
@@ -516,7 +580,6 @@ async function sendMessage(text, input_type) {
         currentPhase: currentModule,
         input_type,
         hint_status:  hintStatus,
-        loop_count:   loopCount,
         loopCount,
         bodyLoop,
         lastEnergy
@@ -528,22 +591,21 @@ async function sendMessage(text, input_type) {
     const data = await res.json();
     currentModule = data.next || currentModule;
 
-    // hiiroフェーズのループ数を更新
-    if (currentModule === "hiiro") bodyLoop++;
-    else bodyLoop = 0;
-
     removeDots();
     addHiiroBubble((data.output || "…").replace(/\n/g, "<br>"));
 
     if (data.next === "lp") {
-      await showCTA();
+      await showCTA(data.lp_url, data.cta_text);
+    } else if (data.next === "end") {
+      // 静かに終了
+      lockInput();
     } else {
       const btns = data.buttons || "";
       showExchangeButtons(btns);
       unlockInput();
     }
 
-  } catch (e) {
+  } catch (err) {
     clearTimeout(timeoutId);
     removeDots();
     addHiiroBubble("…");
