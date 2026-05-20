@@ -25,10 +25,9 @@ body {
   padding: 4px 16px 140px;
 }
 
-/* アイコン＋名前 */
 .bubble-row {
   display: flex;
-  align-items: flex-start; /* 修正：名前が落ちないよう flex-start に */
+  align-items: flex-start;
   margin-bottom: 6px;
 }
 .bubble-row.hiiro-row { justify-content: flex-start; }
@@ -61,7 +60,6 @@ body {
   margin-right: 8px;
 }
 
-/* 吹き出し */
 .bubble {
   max-width: 60%;
   padding: 8px 14px;
@@ -82,7 +80,6 @@ body {
   color: #4a4a4a;
 }
 
-/* 時間 */
 .time {
   font-size: 11px;
   opacity: 0.4;
@@ -90,7 +87,6 @@ body {
 }
 .time.right { text-align: right; }
 
-/* モードメニュー */
 .menu {
   display: flex;
   flex-wrap: wrap;
@@ -110,7 +106,6 @@ body {
 }
 .menu div:hover { opacity: 0.7; }
 
-/* 入力欄 */
 .input-wrap {
   position: fixed;
   bottom: 20px;
@@ -155,7 +150,6 @@ textarea::placeholder { color: #c8c0b8; }
 }
 .send-btn-el:disabled { opacity: 0.3; cursor: default; }
 
-/* 交換ボタン */
 .exchange-btns {
   display: flex;
   flex-wrap: wrap;
@@ -176,7 +170,6 @@ textarea::placeholder { color: #c8c0b8; }
 }
 .exchange-btn:hover { opacity: 0.7; }
 
-/* CTA */
 .cta-wrap {
   margin: 4px 0 12px 52px;
 }
@@ -187,7 +180,35 @@ textarea::placeholder { color: #c8c0b8; }
   font-size: 14px;
 }
 
-/* アニメ */
+/* 診断結果カード */
+.diagnosis-card {
+  margin: 4px 0 12px 52px;
+  background: #ffffff;
+  border-radius: 16px;
+  border-top-left-radius: 4px;
+  padding: 16px 18px;
+  max-width: 60%;
+  line-height: 1.7;
+}
+.diagnosis-type {
+  font-size: 16px;
+  font-weight: bold;
+  color: #4b403d;
+  margin-bottom: 6px;
+}
+.diagnosis-desc {
+  font-size: 13px;
+  color: #7a6b66;
+  margin-bottom: 12px;
+}
+.diagnosis-lp {
+  display: inline-block;
+  color: #7d5f58;
+  border-bottom: 1px solid #cdb8b1;
+  text-decoration: none;
+  font-size: 13px;
+}
+
 .fade { animation: fadeUp 0.5s ease both; }
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(4px); }
@@ -201,7 +222,6 @@ textarea::placeholder { color: #c8c0b8; }
 <body>
 <div id="app">
 
-  <!-- ひいろ初期発話 -->
   <div class="bubble-row hiiro-row fade">
     <div class="icon-wrap">
       <div class="icon">
@@ -213,7 +233,6 @@ textarea::placeholder { color: #c8c0b8; }
 どんなお話しましょうか</div>
   </div>
 
-  <!-- モード選択メニュー -->
   <div class="menu" id="menu" style="display:none;">
     <div onclick="selectMode('仕事')">仕事</div>
     <div onclick="selectMode('恋愛')">恋愛</div>
@@ -236,12 +255,76 @@ textarea::placeholder { color: #c8c0b8; }
 
 <script>
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// HIIRO — フロント v3
+// HIIRO — フロント v3.1（診断フロー追加）
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const GAS_URL     = "https://script.google.com/macros/s/AKfycby4fVXJuuRlcrD5YhkaCVlWVUyGrgSRlTZQQ_GUvDzjlJ1R0HSEpmRkEHkc_rFFx3HINw/exec";
-const LP_URL      = "https://fractalhistyle.wixsite.com/my-site-2";
-const GAS_TIMEOUT = 15000;
+const GAS_URL      = "https://script.google.com/macros/s/AKfycby4fVXJuuRlcrD5YhkaCVlWVUyGrgSRlTZQQ_GUvDzjlJ1R0HSEpmRkEHkc_rFFx3HINw/exec";
+const DIAG_GAS_URL = "https://script.google.com/macros/s/AKfycby4fVXJuuRlcrD5YhkaCVlWVUyGrgSRlTZQQ_GUvDzjlJ1R0HSEpmRkEHkc_rFFx3HINw/exec"; // 診断用（同じGASで可）
+const LP_URL       = "https://fractalhistyle.wixsite.com/my-site-2";
+const GAS_TIMEOUT  = 15000;
+
+// ── 診断データ ────────────────────────────────────
+const DIAGNOSIS_QUESTIONS = [
+  { q: "友人が落ち込んで相談してきたとき、\nあなたは最初に何をすることが多いですか？", opts: ["まず相手の気持ちを聞く", "何が起きたのか状況を整理する", "励ましたり元気づける", "少し距離を取りながら話を聞く"] },
+  { q: "人と会話しているとき、\n自分は何をしていることが多いですか？", opts: ["相手の気持ちを感じている", "状況や話を整理している", "どう支えられるか考えている", "少し引いた視点で全体を見ている"] },
+  { q: "人間関係で、\n一番疲れやすいのはどんなときですか？", opts: ["相手の感情が強すぎる", "話が整理されていない", "距離が近すぎる", "空気を読み続ける"] },
+  { q: "子どもの頃の家庭の雰囲気は\nどれに近いですか？", opts: ["安心できる家庭", "期待や責任が多かった", "干渉が多かった", "距離があった"] },
+  { q: "子どもの頃、家庭の中での\nあなたの役割はどれに近いですか？", opts: ["いい子", "調整役", "頑張る人", "自由な人"] },
+  { q: "今のあなたの人間関係に\n一番影響しているものは何ですか？", opts: ["親", "学校", "恋愛", "仕事"] },
+  { q: "あなたの人間関係で\nよく起きることに一番近いものはどれですか？", opts: ["相談されることが多い", "相手に合わせすぎる", "一人の時間が必要になる", "理解されにくい"] },
+  { q: "あなたが疲れやすい人は\nどんなタイプですか？", opts: ["感情が強い", "支配的", "依存的", "距離が近い"] },
+  { q: "人間関係で\n一番大事にしているものはどれですか？", opts: ["安心", "尊重", "自由", "理解"] },
+  { q: "職場やグループの中で\nあなたの立ち位置はどれに近いですか？", opts: ["感情の相談役", "問題を整理する役", "人を支える役", "少し外から見ている役"] },
+  { q: "人間関係のトラブルが起きたとき、\nあなたはどうすることが多いですか？", opts: ["仲裁する", "原因を分析する", "誰かを支える", "少し距離を取る"] },
+  { q: "あなたの人間関係で\n一番自然に感じる役割はどれですか？", opts: ["人の気持ちを理解する人", "問題を整理する人", "人を支える人", "少し外から観察する人"] }
+];
+
+// A=共感 B=構造 C=支援 D=観察
+const SCORE_MAP = { A: "共感", B: "構造", C: "支援", D: "観察" };
+
+const TYPE_DATA = {
+  mirror:      { name: "ミラー",      desc: "人の気持ちを映し取る自然な共感者。感情の流れを感じ取り、相手が何を感じているかを直感的に理解します。" },
+  caretaker:   { name: "ケアテイカー", desc: "支えることで関係を築くタイプ。誰かのために動くことで安定を感じ、人の力になることが自然な役割です。" },
+  organizer:   { name: "オーガナイザー", desc: "状況を整理して関係を動かすタイプ。混乱した場面でも構造を見つけ、物事を前に進める力があります。" },
+  observer:    { name: "オブザーバー", desc: "少し外から全体を見るタイプ。距離を保ちながら本質を見抜き、独自の視点で関係を理解します。" },
+  navigator:   { name: "ナビゲーター", desc: "共感と構造を両方持つタイプ。感情を感じながら全体の方向を示す、稀な統合型です。" },
+  fractal:     { name: "フラクタル",   desc: "観察と構造が重なる複合タイプ。関係のパターンそのものを見る、深い洞察を持ちます。" }
+};
+
+const LP_MAP = {
+  caretaker: "https://sites.google.com/view/enfla-caretaker",
+  mirror:    "https://sites.google.com/view/enfla-mirror",
+  navigator: "https://sites.google.com/view/enfla-navigator",
+  organizer: "https://sites.google.com/view/enfla-organizer",
+  observer:  "https://sites.google.com/view/enfla-observer",
+  fractal:   "https://sites.google.com/view/enfla-fractal"
+};
+
+// ── タイプ判定ロジック ────────────────────────────
+function judgeType(answers) {
+  const count = { 共感: 0, 構造: 0, 支援: 0, 観察: 0 };
+  answers.forEach(a => {
+    const category = SCORE_MAP[a];
+    if (category) count[category]++;
+  });
+
+  const 共感 = count["共感"];
+  const 構造 = count["構造"];
+  const 支援 = count["支援"];
+  const 観察 = count["観察"];
+
+  // 複合判定（共感+構造 → ナビゲーター / 観察+構造 → フラクタル）
+  if (共感 >= 3 && 構造 >= 3) return "navigator";
+  if (観察 >= 3 && 構造 >= 3) return "fractal";
+
+  // 最多判定
+  const max = Math.max(共感, 構造, 支援, 観察);
+  if (共感 === max) return "mirror";
+  if (支援 === max) return "caretaker";
+  if (構造 === max) return "organizer";
+  if (観察 === max) return "observer";
+  return "observer";
+}
 
 // ── userId ────────────────────────────────────────
 function getOrCreateUserId() {
@@ -264,17 +347,20 @@ let currentModule = "catch";
 let mode          = "";
 let loopCount     = 0;
 let loopFired     = false;
-let bodyLoop      = 0;      // hiiroフェーズの身体軸ループ数
-let lastEnergy    = "";     // ユーザーの最後の選択語を保持
+let bodyLoop      = 0;
+let lastEnergy    = "";
 
-// ── 発話バッファ（直近5件） ───────────────────────
+// 診断状態
+let diagAnswers   = [];   // 回答配列
+let diagStep      = 0;    // 現在の設問番号（0〜11）
+let inDiagnosis   = false;
+
 const utteranceBuffer = [];
 const BUFFER_SIZE = 5;
 
 function pushBuffer(text) {
   utteranceBuffer.push(text);
   if (utteranceBuffer.length > BUFFER_SIZE) utteranceBuffer.shift();
-  // 具体名詞があれば優先してlastEnergyに保持
   const concrete = extractConcrete(text);
   lastEnergy = concrete || text;
 }
@@ -286,65 +372,47 @@ const ANXIOUS_WORDS   = ["してくれない","わかってくれない","嫌わ
 const AVOIDANT_WORDS  = ["まあ","別に","どうせ","仕方ない","関係ない","慣れた","普通に"];
 
 function detectHintStatus(text) {
-  // 過負荷・フラッシュバック（最優先）
   if (OVERLOAD_WORDS.some(w => text.includes(w)))  return "overload";
   if (FLASHBACK_WORDS.some(w => text.includes(w))) return "overload";
   if (text.length > 80)                             return "overload";
-
-  // バッファ込みの不安型検知
   const recentTexts = utteranceBuffer.join(" ");
   const anxiousHits = ANXIOUS_WORDS.filter(w => recentTexts.includes(w)).length;
   if (ANXIOUS_WORDS.some(w => text.includes(w)) || anxiousHits >= 2) return "anxious";
-
-  // 回避型検知（短文連続 or 合理化語）
   const shortCount = utteranceBuffer.filter(t => t.length <= 12).length;
   if (AVOIDANT_WORDS.some(w => text.includes(w)) || shortCount >= 3) return "avoidant";
-
   return "normal";
 }
 
 function detectInputType(text) {
-  // 回避パターン（極短・「…」のみ）
   if (text.length <= 3 || /^[…。、]+$/.test(text)) return "avoidance_pattern";
-
-  // 繰り返しパターン（直近5発話で同一語3回以上）
   const tokens = text.split(/\s+|、|。/).filter(Boolean);
   for (const token of tokens) {
     if (token.length < 2) continue;
     const count = utteranceBuffer.filter(t => t.includes(token)).length;
     if (count >= 2) return "repeat";
   }
-
   return "free";
 }
 
-// ── 具体名詞の簡易抽出 ────────────────────────────
-// 時間語・人物語・場所語をlastEnergyとして保持
 function extractConcrete(text) {
-  // 時間語
-  const timeWords = ["毎日","毎朝","毎晩","ずっと","最近","昨日","今日","先週","去年","あのとき","いつも","何年も","何ヶ月も"];
-  // 人物語
+  const timeWords   = ["毎日","毎朝","毎晩","ずっと","最近","昨日","今日","先週","去年","あのとき","いつも","何年も","何ヶ月も"];
   const personWords = ["彼","彼女","あの人","上司","親","母","父","友達","同僚","パートナー","子ども","先生"];
-  // 場所語
-  const placeWords = ["職場","家","学校","会社","あの場所","ここ","そこ"];
-
+  const placeWords  = ["職場","家","学校","会社","あの場所","ここ","そこ"];
   for (const w of [...timeWords, ...personWords, ...placeWords]) {
     if (text.includes(w)) return w;
   }
   return "";
 }
+
 function nowTime() {
   const d = new Date();
   return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
 }
 
-// ── 入力制御 ─────────────────────────────────────
 function lockInput()   { inputEl.disabled = true;  sendBtn.disabled = true; }
 function unlockInput() { inputEl.disabled = false; sendBtn.disabled = false; inputEl.focus(); }
-
-// ── ユーティリティ ────────────────────────────────
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-function scrollBottom() { window.scrollTo(0, document.body.scrollHeight); }
+function sleep(ms)     { return new Promise(r => setTimeout(r, ms)); }
+function scrollBottom(){ window.scrollTo(0, document.body.scrollHeight); }
 function escHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")
           .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -403,10 +471,8 @@ function removeDots() {
 function showExchangeButtons(buttons) {
   document.querySelectorAll(".exchange-btns").forEach(e => e.remove());
   if (!buttons) return;
-  // | 区切りと , 区切りの両方に対応
   const list = buttons.split(/[|,]/).map(s => s.trim()).filter(Boolean);
   if (!list.length) return;
-
   const wrap = document.createElement("div");
   wrap.className = "exchange-btns fade";
   list.forEach(label => {
@@ -443,13 +509,109 @@ async function showCTA(lpUrl, ctaText) {
   scrollBottom();
 }
 
-// ── loopCount接続フォーマット（1回だけ） ─────────
-async function maybeShowLoopBridge() {
-  if (loopFired || loopCount < 3) return;
-  loopFired = true;
-  await sleep(800);
-  addHiiroBubble("…もう少し、一緒に見ていけそうですか。");
-  showExchangeButtons("もう少し、一緒に見ていけそう|まだ少し");
+// ── 診断結果カード表示 ────────────────────────────
+async function showDiagnosisResult(type) {
+  const data  = TYPE_DATA[type]  || TYPE_DATA["observer"];
+  const lpUrl = LP_MAP[type]     || LP_URL;
+  await sleep(1800);
+  const card = document.createElement("div");
+  card.className = "diagnosis-card fade";
+  card.innerHTML = `
+    <div class="diagnosis-type">${data.name}タイプ</div>
+    <div class="diagnosis-desc">${data.desc}</div>
+    <a class="diagnosis-lp" href="${lpUrl}" target="_blank">➔ あなたの関係性トランスの詳細を見る</a>
+  `;
+  chat.appendChild(card);
+  const ts = document.createElement("div");
+  ts.className = "time";
+  ts.innerText = nowTime();
+  chat.appendChild(ts);
+  scrollBottom();
+
+  // 診断後 → sessionへの橋渡し
+  await sleep(2000);
+  addHiiroBubble("もう少し、一緒に見てみませんか。");
+  await sleep(1000);
+  showExchangeButtons("YES|NO");
+  currentModule = "session_offer";
+  unlockInput();
+}
+
+// ── 診断：1問表示 ─────────────────────────────────
+async function showDiagnosisQuestion(step) {
+  const q = DIAGNOSIS_QUESTIONS[step];
+  addDots();
+  await sleep(1200);
+  removeDots();
+  addHiiroBubble(escHtml(q.q).replace(/\n/g, "<br>"));
+  await sleep(400);
+
+  // A/B/C/Dラベルで表示
+  const labels = ["A", "B", "C", "D"];
+  const wrap = document.createElement("div");
+  wrap.className = "exchange-btns fade";
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "exchange-btn";
+    btn.innerText = opt;
+    btn.dataset.answer = labels[i];
+    btn.onclick = () => {
+      wrap.remove();
+      addUserBubble(opt);
+      diagAnswers.push(labels[i]);
+      diagStep++;
+
+      if (diagStep < DIAGNOSIS_QUESTIONS.length) {
+        showDiagnosisQuestion(diagStep);
+      } else {
+        // 全問完了 → 判定
+        finalizeDiagnosis();
+      }
+    };
+    wrap.appendChild(btn);
+  });
+  chat.appendChild(wrap);
+  scrollBottom();
+}
+
+// ── 診断完了 ─────────────────────────────────────
+async function finalizeDiagnosis() {
+  inDiagnosis = false;
+  const type = judgeType(diagAnswers);
+
+  addDots();
+  await sleep(1800);
+  removeDots();
+  addHiiroBubble("…少し、見えてきたかもしれない。");
+
+  // GASへ記録送信（スタンドアロン）
+  try {
+    await fetch(GAS_URL, {
+      method:  "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        userId,
+        module:    "diagnosis_result",
+        input_type: "diagnosis",
+        answers:   diagAnswers,
+        type:      type
+      })
+    });
+  } catch(e) { /* 記録失敗は無視 */ }
+
+  await showDiagnosisResult(type);
+}
+
+// ── 診断イントロ ─────────────────────────────────
+async function startDiagnosisIntro() {
+  addDots();
+  await sleep(1800);
+  removeDots();
+  addHiiroBubble("よかったら、あなたの「感じ方」<br>今一緒に見てみませんか？");
+  await sleep(600);
+  showExchangeButtons("YES|NO");
+  currentModule = "diagnosis_intro";
+  unlockInput();
 }
 
 // ── モード選択 ────────────────────────────────────
@@ -489,10 +651,50 @@ async function sendMessage(text, input_type) {
     return;
   }
 
+  // 診断イントロの返答
+  if (currentModule === "diagnosis_intro") {
+    if (text === "YES") {
+      inDiagnosis = true;
+      diagAnswers = [];
+      diagStep    = 0;
+      currentModule = "diagnosis";
+      await showDiagnosisQuestion(0);
+    } else {
+      // NO → session_offerへ静かにスキップ
+      addDots();
+      await sleep(1000);
+      removeDots();
+      addHiiroBubble("…そのままでいいです。");
+      await sleep(800);
+      currentModule = "session_offer";
+      addHiiroBubble("もう少し、一緒に見てみませんか。");
+      showExchangeButtons("YES|NO");
+      unlockInput();
+    }
+    return;
+  }
+
+  // session_offer（診断後 or 診断スキップ後）
+  if (currentModule === "session_offer") {
+    if (text === "YES") {
+      addDots();
+      await sleep(1800);
+      removeDots();
+      await showCTA(LP_URL, "➔ そのまま、一緒に");
+    } else {
+      addDots();
+      await sleep(1000);
+      removeDots();
+      addHiiroBubble("…そのままでいいです。\nまた気が向いたら。");
+      lockInput();
+    }
+    return;
+  }
+
   // hint_status判定
   const hintStatus = detectHintStatus(text);
 
-  // overload → 身体アンカーのみ（フェーズホールド）
+  // overload → 身体アンカーのみ
   if (hintStatus === "overload") {
     addDots();
     await sleep(2000);
@@ -508,7 +710,6 @@ async function sendMessage(text, input_type) {
   if (currentModule === "catch") {
     loopCount++;
 
-    // ① 認識の回復：loopCount=3で「近い」が来た → catch_torqueへ
     if (loopCount >= 3 && text === "近い") {
       addDots();
       await sleep(1800);
@@ -520,15 +721,12 @@ async function sendMessage(text, input_type) {
       return;
     }
 
-    // ④ 具体と抽象の往復：「近い」が来てlastEnergyがある場合（loopCount < 3）
     if (text === "近い" && lastEnergy && loopCount < 3) {
       addDots();
       await sleep(1000);
       removeDots();
-      // 具体に降りる
       addHiiroBubble(`…${lastEnergy}、か。`);
       await sleep(1200);
-      // そのまま身体へ
       addHiiroBubble("そのとき、体のどこかにある？");
       currentModule = "hiiro";
       showExchangeButtons("胸のあたり|喉のあたり|頭のあたり|わからない");
@@ -537,7 +735,7 @@ async function sendMessage(text, input_type) {
     }
   }
 
-  // ② 身体の回復：hiiroで「置いておく」が来た → hiiro_torqueへ
+  // ② 身体の回復
   if (currentModule === "hiiro" && (text === "置いておく" || text === "もう少し見る")) {
     const bodyPart = lastEnergy || "その感じ";
     addDots();
@@ -550,7 +748,6 @@ async function sendMessage(text, input_type) {
     return;
   }
 
-  // hiiro_torqueのフォロー（どれが来ても次の軸へ）
   if (currentModule === "hiiro_torque") {
     if (text === "あまり") {
       addDots();
@@ -566,10 +763,10 @@ async function sendMessage(text, input_type) {
       await sleep(800);
     }
     bodyLoop++;
-    currentModule = "hiiro_flow"; // 次の軸へ
+    currentModule = "hiiro_flow";
   }
 
-  // ③ 存在の回復：offer_preで「近い」が来た → 存在の回復メッセージ
+  // ③ 存在の回復
   if (currentModule === "offer_pre" && text === "近い") {
     addDots();
     await sleep(1800);
@@ -581,17 +778,13 @@ async function sendMessage(text, input_type) {
     return;
   }
 
-  // offer_existenceの後 → offer本体へ
+  // offer_existence → 診断イントロへ
   if (currentModule === "offer_existence") {
     await sleep(1800);
-    addHiiroBubble("もう少し戻れるかもしれない。<br>一緒に、見てみませんか。");
-    currentModule = "offer_3";
-    showExchangeButtons("YES|NO");
-    unlockInput();
+    await startDiagnosisIntro();
     return;
   }
 
-  // hiiro/session/offer系は長めのディレイ
   const delay = ["hiiro","hiiro_flow","hiiro_dist","hiiro_dir","hiiro_contour","session","offer","offer_pre"].includes(currentModule) ? 1800 : 1000;
 
   addDots();
@@ -605,16 +798,12 @@ async function sendMessage(text, input_type) {
       method:  "POST",
       headers: { "Content-Type": "text/plain" },
       body:    JSON.stringify({
-        userId,
-        mode,
-        text,
+        userId, mode, text,
         module:       currentModule,
         currentPhase: currentModule,
         input_type,
         hint_status:  hintStatus,
-        loopCount,
-        bodyLoop,
-        lastEnergy
+        loopCount, bodyLoop, lastEnergy
       }),
       signal: controller.signal
     });
@@ -629,11 +818,9 @@ async function sendMessage(text, input_type) {
     if (data.next === "lp") {
       await showCTA(data.lp_url, data.cta_text);
     } else if (data.next === "end") {
-      // 静かに終了
       lockInput();
     } else {
-      const btns = data.buttons || "";
-      showExchangeButtons(btns);
+      showExchangeButtons(data.buttons || "");
       unlockInput();
     }
 
@@ -655,14 +842,12 @@ window.addEventListener("load", () => {
   }).catch(() => {});
 });
 
-// ── Enter送信 ─────────────────────────────────────
 inputEl.addEventListener("keypress", e => {
   if (e.key === "Enter" && !e.shiftKey && !inputEl.disabled) {
     e.preventDefault();
     send();
   }
 });
-
 </script>
 </body>
 </html>
