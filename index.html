@@ -239,7 +239,7 @@ textarea::placeholder { color: #c8c0b8; }
 // HIIRO — フロント v3
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const GAS_URL     = "https://script.google.com/macros/s/AKfycbwmGHHI_RdnYEucLeLYM6hIrxr4Z8Ot9i5J0WKS_gwbB0CK_VQfZPHvkE7Rz_Kiie-Opg/exec";
+const GAS_URL     = "https://script.google.com/macros/s/AKfycby4fVXJuuRlcrD5YhkaCVlWVUyGrgSRlTZQQ_GUvDzjlJ1R0HSEpmRkEHkc_rFFx3HINw/exec";
 const LP_URL      = "https://fractalhistyle.wixsite.com/my-site-2";
 const GAS_TIMEOUT = 15000;
 
@@ -274,7 +274,9 @@ const BUFFER_SIZE = 5;
 function pushBuffer(text) {
   utteranceBuffer.push(text);
   if (utteranceBuffer.length > BUFFER_SIZE) utteranceBuffer.shift();
-  lastEnergy = text; // 最後の発話を保持
+  // 具体名詞があれば優先してlastEnergyに保持
+  const concrete = extractConcrete(text);
+  lastEnergy = concrete || text;
 }
 
 // ── 検知エンジン ──────────────────────────────────
@@ -316,7 +318,21 @@ function detectInputType(text) {
   return "free";
 }
 
-// ── 時刻 ─────────────────────────────────────────
+// ── 具体名詞の簡易抽出 ────────────────────────────
+// 時間語・人物語・場所語をlastEnergyとして保持
+function extractConcrete(text) {
+  // 時間語
+  const timeWords = ["毎日","毎朝","毎晩","ずっと","最近","昨日","今日","先週","去年","あのとき","いつも","何年も","何ヶ月も"];
+  // 人物語
+  const personWords = ["彼","彼女","あの人","上司","親","母","父","友達","同僚","パートナー","子ども","先生"];
+  // 場所語
+  const placeWords = ["職場","家","学校","会社","あの場所","ここ","そこ"];
+
+  for (const w of [...timeWords, ...personWords, ...placeWords]) {
+    if (text.includes(w)) return w;
+  }
+  return "";
+}
 function nowTime() {
   const d = new Date();
   return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
@@ -495,11 +511,27 @@ async function sendMessage(text, input_type) {
     // ① 認識の回復：loopCount=3で「近い」が来た → catch_torqueへ
     if (loopCount >= 3 && text === "近い") {
       addDots();
-      await sleep(1800); // 「少し」のときだけ長めのディレイ
+      await sleep(1800);
       removeDots();
       addHiiroBubble("…少し、見えてきた感じしない？");
       currentModule = "catch_torque";
       showExchangeButtons("少し|まだ|わからない");
+      unlockInput();
+      return;
+    }
+
+    // ④ 具体と抽象の往復：「近い」が来てlastEnergyがある場合（loopCount < 3）
+    if (text === "近い" && lastEnergy && loopCount < 3) {
+      addDots();
+      await sleep(1000);
+      removeDots();
+      // 具体に降りる
+      addHiiroBubble(`…${lastEnergy}、か。`);
+      await sleep(1200);
+      // そのまま身体へ
+      addHiiroBubble("そのとき、体のどこかにある？");
+      currentModule = "hiiro";
+      showExchangeButtons("胸のあたり|喉のあたり|頭のあたり|わからない");
       unlockInput();
       return;
     }
