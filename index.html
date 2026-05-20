@@ -180,26 +180,53 @@ textarea::placeholder { color: #c8c0b8; }
   font-size: 14px;
 }
 
-/* 診断結果カード */
-.diagnosis-card {
+/* 診断結果 */
+.diagnosis-wrap {
   margin: 4px 0 12px 52px;
-  background: #ffffff;
-  border-radius: 16px;
-  border-top-left-radius: 4px;
-  padding: 16px 18px;
-  max-width: 60%;
-  line-height: 1.7;
+  max-width: 64%;
+}
+.diagnosis-icon {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+  margin-bottom: 10px;
 }
 .diagnosis-type {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: bold;
   color: #4b403d;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
-.diagnosis-desc {
+.diagnosis-keywords {
+  font-size: 11px;
+  color: #b8a49e;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+}
+.diagnosis-summary {
   font-size: 13px;
+  font-weight: bold;
+  color: #4b403d;
+  white-space: pre-line;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.diagnosis-detail {
+  font-size: 13px;
+  color: #5a4d49;
+  white-space: pre-line;
+  line-height: 1.7;
+}
+.diagnosis-section {
+  font-size: 12px;
+  color: #9b8480;
+  margin-bottom: 2px;
+}
+.diagnosis-detail {
+  font-size: 12px;
   color: #7a6b66;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  line-height: 1.6;
 }
 .diagnosis-lp {
   display: inline-block;
@@ -207,6 +234,7 @@ textarea::placeholder { color: #c8c0b8; }
   border-bottom: 1px solid #cdb8b1;
   text-decoration: none;
   font-size: 13px;
+  margin-top: 4px;
 }
 
 .fade { animation: fadeUp 0.5s ease both; }
@@ -258,8 +286,8 @@ textarea::placeholder { color: #c8c0b8; }
 // HIIRO — フロント v3.1（診断フロー追加）
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-const GAS_URL      = "https://script.google.com/macros/s/AKfycbwnL4dDcOU6l-4pfKV9aClY_L0pd7neIM1zUeYYCsbF6phehu8mx7LczEtwyPtjF-L-wQ/exec";
-const DIAG_GAS_URL = "https://script.google.com/macros/s/AKfycbwnL4dDcOU6l-4pfKV9aClY_L0pd7neIM1zUeYYCsbF6phehu8mx7LczEtwyPtjF-L-wQ/exec"; // 診断用（同じGASで可）
+const GAS_URL      = "https://script.google.com/macros/s/AKfycby4fVXJuuRlcrD5YhkaCVlWVUyGrgSRlTZQQ_GUvDzjlJ1R0HSEpmRkEHkc_rFFx3HINw/exec";
+const DIAG_GAS_URL = "https://script.google.com/macros/s/AKfycby4fVXJuuRlcrD5YhkaCVlWVUyGrgSRlTZQQ_GUvDzjlJ1R0HSEpmRkEHkc_rFFx3HINw/exec"; // 診断用（同じGASで可）
 const LP_URL       = "https://fractalhistyle.wixsite.com/my-site-2";
 const GAS_TIMEOUT  = 15000;
 
@@ -283,21 +311,48 @@ const DIAGNOSIS_QUESTIONS = [
 const SCORE_MAP = { A: "共感", B: "構造", C: "支援", D: "観察" };
 
 const TYPE_DATA = {
-  mirror:      { name: "ミラー",      desc: "人の気持ちを映し取る自然な共感者。感情の流れを感じ取り、相手が何を感じているかを直感的に理解します。" },
-  caretaker:   { name: "ケアテイカー", desc: "支えることで関係を築くタイプ。誰かのために動くことで安定を感じ、人の力になることが自然な役割です。" },
-  organizer:   { name: "オーガナイザー", desc: "状況を整理して関係を動かすタイプ。混乱した場面でも構造を見つけ、物事を前に進める力があります。" },
-  observer:    { name: "オブザーバー", desc: "少し外から全体を見るタイプ。距離を保ちながら本質を見抜き、独自の視点で関係を理解します。" },
-  navigator:   { name: "ナビゲーター", desc: "共感と構造を両方持つタイプ。感情を感じながら全体の方向を示す、稀な統合型です。" },
-  fractal:     { name: "フラクタル",   desc: "観察と構造が重なる複合タイプ。関係のパターンそのものを見る、深い洞察を持ちます。" }
-};
-
-const LP_MAP = {
-  caretaker: "https://sites.google.com/view/enfla-caretaker",
-  mirror:    "https://sites.google.com/view/enfla-mirror",
-  navigator: "https://sites.google.com/view/enfla-navigator",
-  organizer: "https://sites.google.com/view/enfla-organizer",
-  observer:  "https://sites.google.com/view/enfla-observer",
-  fractal:   "https://sites.google.com/view/enfla-fractal"
+  mirror: {
+    name: "ミラー型",
+    icon: "ミラー型.jpg",
+    keywords: "てきおう / くうき / ちょうせい",
+    summary: "合わせすぎて\n自分が消える",
+    detail: "気づいたら自分の感覚がずっと奥に下がっている事すら自覚がなくなっている。\n\n実際\n・関係に溶け込めている\n・場にも違和感はない\n・むしろうまくやれている\nでもなぜか、自分が曖昧になる\n\nこれが関係性トランスです。\n\nセッションでは合わせてしまうこと自体を止めるのではなく、自分の感覚を保ったままのモードに整えていきます。\n\n■ あなたが非常に恵まれてるところ\n・空気を読む力が高い\n・場に自然と馴染む\n・関係の調整ができる\n\n■ 起きやすいこと\n・自分の本音が見えにくくなる\n・環境によってキャラが変わる\n・気づくと疲れている"
+  },
+  caretaker: {
+    name: "ケアテイカー型",
+    icon: "ケアテイカー.jpg",
+    keywords: "きょうかん / しえん / ほうよう",
+    summary: "支えすぎると\n抜けられなくなる",
+    detail: "人の気持ちに自然と寄り添える人。困っている人を放っておけず関係を支える側に回ることが多いはず。ただ気づかないうちに「抱えすぎる」ことも。\n\n・頼られる\n・支える\n・引き受ける\n\n結果、自分の余力がなくなっていく。\n\nこれは優しさではなく、関係の中で役割が自然と固定される適応状態です。支えることが「抜けられないポジション」に変わる。\n\nセッションでは「どこまで引き受けるか」を選べる状態に戻します。\n\n■ あなたが非常に恵まれてるところ\n・相手の感情を敏感に感じ取る\n・困っている人を放っておけない\n・相談されやすい\n\n■ 起きやすいこと\n・頼られる関係になりやすい\n・共依存になりやすいことも"
+  },
+  organizer: {
+    name: "オーガナイザー型",
+    icon: "オーガナイザー型.jpg",
+    keywords: "こうぞう / ぶんせき / れいせい",
+    summary: "整えすぎると\n温度差が生まれる",
+    detail: "全体の流れを自然と見ている。あなたは物事を冷静に判断できる人です。\n\n状況や関係を整理しながら①整理②分析③最適化できます。\n\n①整理してる②判断できてる③状況も見えている、でもなぜか自分に跳ね返るものの反応はずれつづける。\n\nこれが関係性トランスです。\n\n■ あなたが非常に恵まれてるところ\n・状況を客観的に見られる\n・ロジカル思考\n・冷静に判断できる\n\n■ 起きやすいこと\n・縁が淡く見えることがある\n・反応が薄いといわれることが多い\n・距離が自然にできていることが多い"
+  },
+  observer: {
+    name: "オブザーバー型",
+    icon: "オブザーバー型.jpg",
+    keywords: "かんさつ / ふかん / しこう",
+    summary: "距離感を大事にして\n関係が止まる",
+    detail: "一歩引いて見ているはずなのに気づいたら、関係に入る前に止まっている。\n\n本来あなたは全体を見渡す力を持っています。ただその視点が\n・もう少し様子を見よう\n・今は踏み込まない方がいい\n・まだタイミングじゃない\nと働いたときには動く「手前」で止まる、が起きることがあります。\n\n実際には嫌われていない、拒絶もされていない、でもなぜか進まない。\n\nこれが関係性トランスです。\n\n「関与できるモード」へセッションしていきます。\n\n■ あなたが非常に恵まれてるところ\n・全体を把握する力がある\n・感情に飲み込まれにくい\n・冷静に判断できる\n\n■ 起きやすいこと\n・関係が動く前に止まる\n・踏み込むタイミングを逃す\n・距離があるまま終わる"
+  },
+  navigator: {
+    name: "ナビゲーター型",
+    icon: "ナビゲーター型.jpg",
+    keywords: "みちびき / せいり / りかい",
+    summary: "導きすぎると\n背負ってしまう",
+    detail: "あなたは相手の状況を理解しながら自然と方向を示している。人の状況を読み取り整理し言語化し方向を示せる人です。\n\n・相談される\n・導く\n・まとめる\n\nその恵まれたチカラが「背負う側に回る」ことが起きることがあります。\n\n実際には頼られ、感謝され、役に立っているはずなのに自分の負担が増えていく。\n\nこれが関係性トランスです。\n\n「関与しながら背負わない」をセッションしていきます。\n\n■ あなたが非常に恵まれてるところ\n・相談に乗るのが得意\n・状況整理ができる\n・人を導く力がある\n\n■ 起きやすいこと\n・頼られることが増える\n・気づくと抱え込みが増える\n・自分の余白が減る"
+  },
+  fractal: {
+    name: "フラクタル型",
+    icon: "フラクタル型.jpg",
+    keywords: "ぱたーん / こうぞう / どうさつ",
+    summary: "本質理解が強い分\n現実面が弱くなる",
+    detail: "「出来事の中から本質的な流れを捉える」あなたは物事を表面的ではなく本質としての構造を見ることができ、複雑な状況の中から意味の通る形を見つける力を持っています。\n\n抽象度を上げるほど全体像がクリアに見える。その分物事の本質がはっきりしていきます。一方、日常のなかの温度感や、やりとりの「機微」を自然と省略していることがあります。\n\n全体は見えている、本質構造も理解できている、答えも見えている気がする。でも時間はあっても着手できないまま。\n\nこれが関係性トランスです。\n\n本質を保ったまま現実に触れられるモードを探っていきます。\n\n■ あなたが非常に恵まれてるところ\n・本質を見抜く力がある\n・複雑な状況を整理できる\n・俯瞰して考えられる\n\n■ 起きやすいこと\n・抽象度が上がりすぎる\n・最初の一歩が消えることがある\n・感覚と解像度だけ先へとがっていても動作が緩慢なことがある"
+  }
 };
 
 // ── タイプ判定ロジック ────────────────────────────
@@ -511,15 +566,16 @@ async function showCTA(lpUrl, ctaText) {
 
 // ── 診断結果カード表示 ────────────────────────────
 async function showDiagnosisResult(type) {
-  const data  = TYPE_DATA[type]  || TYPE_DATA["observer"];
-  const lpUrl = LP_MAP[type]     || LP_URL;
+  const data = TYPE_DATA[type] || TYPE_DATA["observer"];
   await sleep(1800);
   const card = document.createElement("div");
-  card.className = "diagnosis-card fade";
+  card.className = "diagnosis-wrap fade";
   card.innerHTML = `
-    <div class="diagnosis-type">${data.name}タイプ</div>
-    <div class="diagnosis-desc">${data.desc}</div>
-    <a class="diagnosis-lp" href="${lpUrl}" target="_blank">➔ あなたの関係性トランスの詳細を見る</a>
+    <img class="diagnosis-icon" src="${data.icon}" alt="${data.name}" onerror="this.style.display='none'">
+    <div class="diagnosis-type">${data.name}</div>
+    <div class="diagnosis-keywords">${data.keywords}</div>
+    <div class="diagnosis-summary">${escHtml(data.summary)}</div>
+    <div class="diagnosis-detail">${escHtml(data.detail)}</div>
   `;
   chat.appendChild(card);
   const ts = document.createElement("div");
@@ -687,6 +743,28 @@ async function sendMessage(text, input_type) {
       removeDots();
       addHiiroBubble("…そのままでいいです。\nまた気が向いたら。");
       lockInput();
+    }
+    return;
+  }
+
+  // offer_3 → フロント直接ハンドル
+  if (currentModule === "offer_3") {
+    if (text === "YES") {
+      // YES → セッションCTA（従来通り、GASのlp_tableを参照）
+      addDots();
+      await sleep(1800);
+      removeDots();
+      addHiiroBubble("そのままで来てください。");
+      await sleep(1200);
+      await showCTA(LP_URL, "➔ そのまま、一緒に");
+    } else {
+      // NO → 診断イントロへ
+      addDots();
+      await sleep(1200);
+      removeDots();
+      addHiiroBubble("…もう少し、自分の感じを見てみませんか。");
+      await sleep(800);
+      await startDiagnosisIntro();
     }
     return;
   }
