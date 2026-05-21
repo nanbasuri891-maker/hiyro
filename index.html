@@ -550,12 +550,29 @@ function showExchangeButtons(buttons) {
 }
 
 // ── CTA表示 ──────────────────────────────────────
-async function showCTA(lpUrl, ctaText) {
-  lockInput();
+// ── セッション説明テキスト ───────────────────────
+const SESSION_DESC = {
+  "雰囲気は？": "正解を当てる場じゃないです。<br>他の人と比べることもない。<br>うまく話せなくてもいい。<br><br>ただ、今の感じを<br>もう少しだけ一緒に見ていく時間です。<br><br>90分。<br>ブレストしながら、<br>自分の予測の立て方を少し観ていく感じです。",
+  "どんな変化があるの？": "なんか通る。<br>なんか軽い。<br>なんか分かった。<br><br>そういう感じが、<br>気づいたら起きていることが多いです。",
+  "体験者の声は？": "じぶんでも<br>知らない間に<br>からまったものが<br>かるく<br>ほどけるかんじ"
+};
+
+async function showSessionDesc(label, lpUrl, ctaText) {
   const url  = lpUrl   || LP_URL;
   const text = ctaText || "➔ そのまま、一緒に";
+
+  addDots();
   await sleep(900);
-  // ひいろ吹き出し内にリンクを埋め込む
+  removeDots();
+  addHiiroBubble(SESSION_DESC[label] || "…");
+
+  await sleep(800);
+  await showCTAFinal(url, text);
+}
+
+async function showCTAFinal(url, text) {
+  lockInput();
+  await sleep(600);
   const row = document.createElement("div");
   row.className = "bubble-row hiiro-row fade";
   row.innerHTML = `
@@ -569,6 +586,48 @@ async function showCTA(lpUrl, ctaText) {
   ts.className = "time";
   ts.innerText = nowTime();
   chat.appendChild(ts);
+  scrollBottom();
+}
+
+async function showCTA(lpUrl, ctaText) {
+  lockInput();
+  const url  = lpUrl   || LP_URL;
+  const text = ctaText || "➔ そのまま、一緒に";
+  await sleep(900);
+  const row = document.createElement("div");
+  row.className = "bubble-row hiiro-row fade";
+  row.innerHTML = `
+    <div class="icon-wrap">
+      <div class="icon"><img src="hiiro.png" onerror="this.parentNode.innerText='ひ'"></div>
+      <div class="name">ひいろ</div>
+    </div>
+    <div class="bubble hiiro">今日話してくれてありがとうございます。<br>その感じ、もう少し一緒に観てみませんか。<br><br><a href="${url}" target="_blank" style="color:#7d5f58;border-bottom:1px solid #cdb8b1;text-decoration:none;font-size:14px;">${text}</a></div>`;
+  chat.appendChild(row);
+  const ts = document.createElement("div");
+  ts.className = "time";
+  ts.innerText = nowTime();
+  chat.appendChild(ts);
+  scrollBottom();
+
+  // 3つのボタンを同時に出す
+  await sleep(600);
+  const wrap = document.createElement("div");
+  wrap.className = "exchange-btns fade";
+  ["雰囲気は？", "どんな変化があるの？", "体験者の声は？"].forEach(label => {
+    const btn = document.createElement("button");
+    btn.className = "exchange-btn";
+    btn.innerText = label;
+    btn.onclick = () => {
+      wrap.remove();
+      addUserBubble(label);
+      window._ctaUrl  = url;
+      window._ctaText = text;
+      currentModule   = "session_desc";
+      showSessionDesc(label, url, text);
+    };
+    wrap.appendChild(btn);
+  });
+  chat.appendChild(wrap);
   scrollBottom();
 }
 
@@ -771,6 +830,12 @@ async function sendMessage(text, input_type) {
       addHiiroBubble("…そのままでいいです。<br>また気が向いたら。");
       lockInput();
     }
+    return;
+  }
+
+  // session_desc（セッション説明）
+  if (currentModule === "session_desc") {
+    await showSessionDesc(text, window._ctaUrl, window._ctaText);
     return;
   }
 
