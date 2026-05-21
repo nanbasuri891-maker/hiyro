@@ -467,7 +467,12 @@ function nowTime() {
 function lockInput()   { inputEl.disabled = true;  sendBtn.disabled = true; }
 function unlockInput() { inputEl.disabled = false; sendBtn.disabled = false; inputEl.focus(); }
 function sleep(ms)     { return new Promise(r => setTimeout(r, ms)); }
-function scrollBottom(){ window.scrollTo(0, document.body.scrollHeight); }
+function scrollBottom() {
+  const distFromBottom = document.body.scrollHeight - window.innerHeight - window.scrollY;
+  if (distFromBottom < 120) {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }
+}
 function escHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")
           .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
